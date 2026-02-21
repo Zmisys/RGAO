@@ -651,11 +651,6 @@ export default function DraftPage() {
                 </div>
               )}
 
-              {/* Pick timer */}
-              <div className="border-l border-white/15 pl-6">
-                <PickTimer pickNumber={draftedCount + 1} />
-              </div>
-
               {/* Progress */}
               <div className="text-right">
                 <div className="text-white/45 text-xs">Drafted</div>
@@ -696,6 +691,23 @@ export default function DraftPage() {
           </div>
         </div>
       ) : null}
+
+      {/* ── Pick Timer ── */}
+      {!isDraftComplete && currentPickTeam && (
+        <div className="mb-5 bg-[#1a4731] rounded-2xl shadow-md overflow-hidden">
+          <div className="px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <div className="text-[#c9a84c]/70 text-xs font-semibold uppercase tracking-widest mb-0.5">
+                Pick Clock
+              </div>
+              <div className="text-white/60 text-sm">
+                Pick {draftedCount + 1} of {TOTAL_PICKS} · {TEAMS[currentPickTeam].name}
+              </div>
+            </div>
+            <PickTimer pickNumber={draftedCount + 1} />
+          </div>
+        </div>
+      )}
 
       {/* ── Main 3-Column Grid ── */}
       <div className="grid lg:grid-cols-3 gap-5">
