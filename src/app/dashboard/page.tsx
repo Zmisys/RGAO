@@ -15,6 +15,18 @@ export default function DashboardPage() {
     .filter(p => p.scores && p.scores.length > 0)
     .sort((a, b) => getTotal(a.scores!) - getTotal(b.scores!));
 
+  if (sorted.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="mb-8">
+          <div className="text-[#c9a84c] font-semibold uppercase tracking-widest text-sm mb-2">RGAO</div>
+          <h1 className="text-4xl font-bold text-[#1a4731] mb-1">Tournament Leaderboard</h1>
+          <p className="text-[#1a4731]/60">Scores will appear here once the tournament begins.</p>
+        </div>
+      </div>
+    );
+  }
+
   const leader = sorted[0];
   const leaderTotal = getTotal(leader.scores!);
 
@@ -29,7 +41,7 @@ export default function DashboardPage() {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Tournament Leader', value: leader.nickname ? `"${leader.nickname}"` : leader.name.split(' ')[0] },
+          { label: 'Tournament Leader', value: leader.name.split(' ')[0] },
           { label: 'Leader Score', value: getToPar(leaderTotal) },
           { label: 'Players in Field', value: sorted.length.toString() },
           { label: 'Rounds Complete', value: '4' },
@@ -79,7 +91,7 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-semibold text-[#1a4731]">{player.name}</div>
-                      <div className="text-xs text-[#1a4731]/50">&ldquo;{player.nickname}&rdquo; · HCP: {player.handicap}</div>
+                      <div className="text-xs text-[#1a4731]/50">HCP: {player.handicap}</div>
                     </td>
                     {player.scores!.map((score, i) => (
                       <td key={i} className="px-4 py-3 text-center text-sm">
@@ -122,7 +134,7 @@ export default function DashboardPage() {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <div className="font-bold text-[#1a4731]">{player.name}</div>
-                    <div className="text-[#c9a84c] text-sm font-medium">&ldquo;{player.nickname}&rdquo;</div>
+                    <div className="text-[#c9a84c] text-sm font-medium">HCP {player.handicap}</div>
                   </div>
                   <span className={`text-2xl font-bold ${getToPar(total).startsWith('-') ? 'text-red-600' : 'text-gray-500'}`}>
                     {getToPar(total)}

@@ -1,25 +1,32 @@
 export interface Player {
   id: number;
   name: string;
-  nickname: string;
   handicap: number;
   team: string | null;
+  captain?: boolean;
   scores?: number[];
 }
 
-export const players: Player[] = [
-  { id: 1, name: 'John Adams', nickname: 'Eagle Eye', handicap: 5, team: null, scores: [68, 71, 69, 66] },
-  { id: 2, name: 'Robert Thompson', nickname: 'Birdie', handicap: 8, team: null, scores: [70, 72, 71, 67] },
-  { id: 3, name: 'William Harrison', nickname: 'Par', handicap: 12, team: null, scores: [72, 74, 70, 68] },
-  { id: 4, name: 'Charles Jefferson', nickname: 'Bogey', handicap: 3, team: null, scores: [69, 70, 72, 67] },
-  { id: 5, name: 'George Washington', nickname: 'Chip', handicap: 15, team: null, scores: [73, 75, 72, 70] },
-  { id: 6, name: 'Thomas Madison', nickname: 'Links', handicap: 7, team: null, scores: [71, 72, 70, 68] },
-  { id: 7, name: 'James Monroe', nickname: 'Iron', handicap: 10, team: null, scores: [72, 73, 71, 69] },
-  { id: 8, name: 'Andrew Jackson', nickname: 'Putt', handicap: 6, team: null, scores: [70, 71, 70, 67] },
-  { id: 9, name: 'Henry Clay', nickname: 'Drive', handicap: 9, team: null, scores: [71, 73, 72, 70] },
-  { id: 10, name: 'Daniel Webster', nickname: 'Wedge', handicap: 11, team: null, scores: [73, 74, 72, 71] },
-  { id: 11, name: 'John Quincy', nickname: 'Eagle', handicap: 4, team: null, scores: [69, 70, 68, 65] },
-  { id: 12, name: 'Martin Van Buren', nickname: 'Hook', handicap: 13, team: null, scores: [74, 75, 73, 72] },
-];
+export const TEAM_RWB = 'Team Red, White, & Blue';
+export const TEAM_GWR = 'Team Green, White, & Red';
 
-export const teams = ['The Eagles', 'The Birdies', 'The Bogeys', 'The Pars'];
+export const teams = [TEAM_RWB, TEAM_GWR];
+
+export const players: Player[] = [
+  { id: 1,  name: 'Ryan Parker',      handicap: 6,  team: TEAM_RWB, captain: true },
+  { id: 2,  name: 'Cole Dominguez',   handicap: 2,  team: TEAM_GWR, captain: true },
+  { id: 3,  name: 'Parker Helmig',    handicap: 9,  team: null },
+  { id: 4,  name: 'Layne Pickens',    handicap: 9,  team: null },
+  { id: 5,  name: 'Ty Walsh',         handicap: 11, team: null },
+  { id: 6,  name: 'Jared Janczak',    handicap: 11, team: null },
+  { id: 7,  name: 'Beau Heitmiller',  handicap: 12, team: null },
+  { id: 8,  name: 'Tyler Pate',       handicap: 13, team: null },
+  { id: 9,  name: 'Durham Smythe',    handicap: 16, team: null },
+  { id: 10, name: 'Brady Allison',    handicap: 16, team: null },
+  { id: 11, name: 'Luke Boren',       handicap: 17, team: null },
+  { id: 12, name: 'Patrick Walls',    handicap: 17, team: null },
+  { id: 13, name: 'Austin Maldonado', handicap: 19, team: null },
+  { id: 14, name: 'Sage Shorey',      handicap: 19, team: null },
+  { id: 15, name: 'Joey Zembo',       handicap: 27, team: null },
+  { id: 16, name: 'Tyler Bradford',   handicap: 29, team: null },
+];
