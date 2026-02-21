@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   type TeamId,
   type DraftPlayer,
@@ -183,6 +183,123 @@ function TeamBoard({
           <span>{8 - players.length} spots remaining</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Pick Timer ───────────────────────────────────────────────────────────────
+// 60-second countdown for each draft pick.
+// Place an mp3 file at /public/sounds/pick-timer.mp3 — it plays when time expires.
+
+type TimerStatus = 'idle' | 'running' | 'expired' | 'in';
+
+function PickTimer({ pickNumber }: { pickNumber: number }) {
+  const DURATION_MS = 60_000;
+
+  const [status, setStatus] = useState<TimerStatus>('idle');
+  const [remaining, setRemaining] = useState(DURATION_MS);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Reset whenever the pick number changes (new pick begins)
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setStatus('idle');
+    setRemaining(DURATION_MS);
+  }, [pickNumber]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  const startTimer = () => {
+    if (status === 'running') return;
+    setRemaining(DURATION_MS);
+    setStatus('running');
+    startTimeRef.current = Date.now();
+    intervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const rem = Math.max(0, DURATION_MS - elapsed);
+      setRemaining(rem);
+      if (rem === 0) {
+        clearInterval(intervalRef.current!);
+        intervalRef.current = null;
+        setStatus('expired');
+        audioRef.current?.play().catch(() => {});
+      }
+    }, 10);
+  };
+
+  const pickIsIn = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    setRemaining(0);
+    setStatus('in');
+    audioRef.current?.play().catch(() => {});
+  };
+
+  const seconds = Math.floor(remaining / 1000);
+  const centis = Math.floor((remaining % 1000) / 10);
+  const display = `${String(seconds).padStart(2, '0')}:${String(centis).padStart(2, '0')}`;
+
+  const isExpired = status === 'expired';
+  const isIn = status === 'in';
+  const isRunning = status === 'running';
+
+  const clockColor =
+    isExpired
+      ? 'text-red-400'
+      : isIn
+      ? 'text-[#c9a84c]'
+      : remaining <= 10_000
+      ? 'text-red-400'
+      : remaining <= 20_000
+      ? 'text-yellow-300'
+      : 'text-white';
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {/* Hidden audio element — drop your mp3 at public/sounds/pick-timer.mp3 */}
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio ref={audioRef} src="/sounds/pick-timer.mp3" preload="auto" />
+
+      {status === 'idle' ? (
+        <button
+          onClick={startTimer}
+          className="bg-[#c9a84c] hover:bg-[#b8943a] active:scale-[0.97] text-[#1a4731] font-bold text-sm px-5 py-2.5 rounded-xl transition-all shadow-md uppercase tracking-wide"
+        >
+          On The Clock
+        </button>
+      ) : (
+        <div className="flex flex-col items-center gap-2">
+          {/* Countdown display */}
+          <div
+            className={`font-mono font-black tabular-nums leading-none select-none transition-colors duration-300 ${clockColor}`}
+            style={{ fontSize: '2.6rem', letterSpacing: '0.05em' }}
+          >
+            {display}
+          </div>
+
+          {/* Status label */}
+          <div className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">
+            {isExpired ? 'Time Expired' : isIn ? 'Pick Is In!' : 'Time Remaining'}
+          </div>
+
+          {/* Pick Is In button — only while running */}
+          {isRunning && (
+            <button
+              onClick={pickIsIn}
+              className="mt-1 bg-white/10 hover:bg-white/20 active:scale-[0.97] text-white font-semibold text-xs px-4 py-1.5 rounded-lg transition-all border border-white/20 uppercase tracking-wide"
+            >
+              Pick Is In
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -510,7 +627,7 @@ export default function DraftPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 flex-wrap">
               {/* Upcoming picks */}
               {upcomingPicks.length > 0 && (
                 <div className="hidden sm:block">
@@ -574,6 +691,23 @@ export default function DraftPage() {
           </div>
         </div>
       ) : null}
+
+      {/* ── Pick Timer ── */}
+      {!isDraftComplete && currentPickTeam && (
+        <div className="mb-5 bg-[#1a4731] rounded-2xl shadow-md overflow-hidden">
+          <div className="px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <div className="text-[#c9a84c]/70 text-xs font-semibold uppercase tracking-widest mb-0.5">
+                Pick Clock
+              </div>
+              <div className="text-white/60 text-sm">
+                Pick {draftedCount + 1} of {TOTAL_PICKS} · {TEAMS[currentPickTeam].name}
+              </div>
+            </div>
+            <PickTimer pickNumber={draftedCount + 1} />
+          </div>
+        </div>
+      )}
 
       {/* ── Main 3-Column Grid ── */}
       <div className="grid lg:grid-cols-3 gap-5">
