@@ -7,7 +7,7 @@ import {
   type LogEntry,
   type DraftState,
   TEAMS,
-  TOTAL_PLAYERS,
+  TOTAL_PICKS,
   STORAGE_KEY,
   getInitialDraftState,
   getCurrentPickTeam,
@@ -35,15 +35,41 @@ function saveState(state: DraftState) {
   }
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Flag stripe component ────────────────────────────────────────────────────
+// Renders a 3-color horizontal stripe matching the team's national colors.
+
+function FlagStripe({ teamId, height = 'h-2' }: { teamId: TeamId; height?: string }) {
+  if (teamId === 'rwb') {
+    // USA: red | white | blue
+    return (
+      <div className={`flex ${height}`}>
+        <div className="flex-1 bg-red-600" />
+        <div className="flex-1 bg-white" />
+        <div className="flex-1 bg-blue-700" />
+      </div>
+    );
+  }
+  // Mexico: green | white | red
+  return (
+    <div className={`flex ${height}`}>
+      <div className="flex-1 bg-green-600" />
+      <div className="flex-1 bg-white" />
+      <div className="flex-1 bg-red-600" />
+    </div>
+  );
+}
+
+// ─── Captain badge ────────────────────────────────────────────────────────────
 
 function CaptainBadge() {
   return (
-    <span className="inline-flex items-center text-[10px] font-bold bg-[#c9a84c]/25 text-[#c9a84c] px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 leading-none">
+    <span className="inline-flex items-center text-[10px] font-bold bg-[#c9a84c]/30 text-[#c9a84c] px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 leading-none">
       C
     </span>
   );
 }
+
+// ─── TeamBoard ────────────────────────────────────────────────────────────────
 
 function TeamBoard({
   teamId,
@@ -59,18 +85,15 @@ function TeamBoard({
   const team = TEAMS[teamId];
   const isRWB = teamId === 'rwb';
 
-  const headerGradient = isRWB
-    ? 'bg-gradient-to-r from-red-700 via-red-800 to-blue-900'
-    : 'bg-gradient-to-r from-green-700 via-green-800 to-red-800';
-
+  const headerBg = isRWB ? 'bg-blue-900' : 'bg-green-900';
   const boardBg = isRWB ? 'bg-blue-50' : 'bg-green-50';
-
   const borderActive = isRWB
     ? 'border-blue-500 ring-2 ring-blue-200'
     : 'border-green-500 ring-2 ring-green-200';
-
   const pickNumColor = isRWB ? 'text-blue-400' : 'text-green-500';
 
+  const captain = players.find((p) => p.captain);
+  const drafted = players.filter((p) => !p.captain);
   const avgHandicap =
     players.length > 0
       ? (players.reduce((s, p) => s + p.handicap, 0) / players.length).toFixed(1)
@@ -82,15 +105,23 @@ function TeamBoard({
         isOnClock && !isDraftComplete ? borderActive : 'border-transparent'
       }`}
     >
-      {/* Team header */}
-      <div className={`px-4 py-3 ${headerGradient}`}>
+      {/* Flag stripe */}
+      <FlagStripe teamId={teamId} height="h-2.5" />
+
+      {/* Header */}
+      <div className={`px-4 py-3 ${headerBg}`}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-white font-bold text-sm leading-snug">{team.name}</div>
-            <div className="text-white/60 text-xs mt-0.5">Capt: {team.captain}</div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-xl leading-none">{team.flag}</span>
+              <span className="text-white font-bold text-sm leading-snug">{team.name}</span>
+            </div>
+            <div className="text-white/50 text-xs">Capt: {team.captain} · {team.country}</div>
           </div>
           <div className="text-right shrink-0">
-            <div className="text-white font-bold text-xl leading-none">{players.length}/8</div>
+            <div className="text-white font-bold text-xl leading-none tabular-nums">
+              {players.length}/8
+            </div>
             {isOnClock && !isDraftComplete && (
               <div className="text-[#c9a84c] text-[10px] font-bold uppercase tracking-wider mt-0.5 animate-pulse">
                 On Clock
@@ -102,38 +133,52 @@ function TeamBoard({
 
       {/* Roster */}
       <div className={`p-3 space-y-1.5 min-h-[220px] ${boardBg}`}>
-        {players.length === 0 ? (
-          <div className="flex items-center justify-center h-full min-h-[180px] text-sm text-gray-400">
+        {/* Captain row — always pinned at top */}
+        {captain && (
+          <div className="bg-[#c9a84c]/15 border border-[#c9a84c]/30 rounded-lg px-3 py-2 flex items-center justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-[#1a4731] text-sm">{captain.name}</span>
+                <CaptainBadge />
+              </div>
+              <div className="text-xs text-[#1a4731]/50">HCP {captain.handicap}</div>
+            </div>
+            <span className="text-[#c9a84c] text-xs font-bold shrink-0 ml-2">CAPTAIN</span>
+          </div>
+        )}
+
+        {/* Drafted players */}
+        {drafted.length === 0 && !captain && (
+          <div className="flex items-center justify-center min-h-[160px] text-sm text-gray-400">
             No players drafted yet
           </div>
-        ) : (
-          players.map((player) => (
-            <div
-              key={player.id}
-              className="bg-white rounded-lg px-3 py-2 flex items-center justify-between shadow-sm"
-            >
-              <div className="min-w-0 flex items-center gap-1.5">
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-[#1a4731] text-sm truncate leading-tight">
-                      {player.name}
-                    </span>
-                    {player.captain && <CaptainBadge />}
-                  </div>
-                  <div className="text-xs text-[#1a4731]/50 leading-tight">HCP {player.handicap}</div>
-                </div>
-              </div>
-              <span className={`text-xs font-bold shrink-0 ml-2 tabular-nums ${pickNumColor}`}>
-                #{player.pickNumber}
-              </span>
-            </div>
-          ))
         )}
+        {drafted.length === 0 && captain && (
+          <div className="flex items-center justify-center min-h-[120px] text-sm text-gray-400">
+            No picks yet
+          </div>
+        )}
+        {drafted.map((player) => (
+          <div
+            key={player.id}
+            className="bg-white rounded-lg px-3 py-2 flex items-center justify-between shadow-sm"
+          >
+            <div className="min-w-0">
+              <div className="font-semibold text-[#1a4731] text-sm leading-tight">
+                {player.name}
+              </div>
+              <div className="text-xs text-[#1a4731]/45">HCP {player.handicap}</div>
+            </div>
+            <span className={`text-xs font-bold shrink-0 ml-2 tabular-nums ${pickNumColor}`}>
+              #{player.pickNumber}
+            </span>
+          </div>
+        ))}
       </div>
 
-      {/* Footer stats */}
+      {/* Footer */}
       <div className={`px-4 py-2 border-t border-black/5 ${boardBg}`}>
-        <div className="flex justify-between text-xs text-[#1a4731]/50">
+        <div className="flex justify-between text-xs text-[#1a4731]/45">
           <span>Avg HCP: {avgHandicap}</span>
           <span>{8 - players.length} spots remaining</span>
         </div>
@@ -148,69 +193,65 @@ function CoinFlipScreen({ onSelect }: { onSelect: (team: TeamId) => void }) {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-xl">
-        {/* Title */}
         <div className="text-center mb-10">
           <div className="text-[#c9a84c] font-semibold uppercase tracking-widest text-xs mb-3">
             RGAO · Ryder Cup
           </div>
           <h1 className="text-4xl font-bold text-[#1a4731] mb-3">Draft Dashboard</h1>
-          <p className="text-[#1a4731]/55 text-sm max-w-sm mx-auto">
-            Conduct the coin flip in person, then select which captain won and picks first to begin the draft.
+          <p className="text-[#1a4731]/50 text-sm max-w-xs mx-auto">
+            Conduct the coin flip in person, then select which captain won and picks first.
           </p>
         </div>
 
-        {/* Coin flip card */}
         <div className="bg-white rounded-2xl border border-[#c9a84c]/25 shadow-lg overflow-hidden">
           <div className="bg-[#1a4731] px-6 py-6 text-center">
             <div className="text-5xl mb-3 select-none">🪙</div>
             <h2 className="text-[#c9a84c] font-bold text-xl">Coin Flip</h2>
-            <p className="text-white/50 text-sm mt-1">Who picks first?</p>
+            <p className="text-white/45 text-sm mt-1">Who picks first?</p>
           </div>
 
           <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Team RWB button */}
+            {/* Team RWB — USA */}
             <button
               onClick={() => onSelect('rwb')}
-              className="group text-left rounded-xl border-2 border-gray-200 hover:border-blue-500 bg-gradient-to-b from-blue-50 to-red-50 hover:from-blue-100 hover:to-red-100 p-5 transition-all duration-150 hover:shadow-md active:scale-[0.98]"
+              className="group text-left rounded-xl border-2 border-gray-200 hover:border-blue-500 overflow-hidden transition-all duration-150 hover:shadow-md active:scale-[0.98]"
             >
-              <div className="flex gap-2 mb-2">
-                <span className="text-2xl">🔵</span>
-                <span className="text-2xl">🔴</span>
-              </div>
-              <div className="font-bold text-[#1a4731] text-sm leading-tight mb-1">
-                {TEAMS.rwb.name}
-              </div>
-              <div className="text-xs text-[#1a4731]/55 mb-3">
-                Captain: {TEAMS.rwb.captain}
-              </div>
-              <div className="text-blue-700 font-semibold text-xs group-hover:underline">
-                Picks First →
+              <FlagStripe teamId="rwb" height="h-2" />
+              <div className="bg-gradient-to-b from-blue-50 to-white group-hover:from-blue-100 p-5 transition-colors">
+                <div className="text-4xl mb-2">{TEAMS.rwb.flag}</div>
+                <div className="font-bold text-[#1a4731] text-sm leading-tight mb-0.5">
+                  {TEAMS.rwb.name}
+                </div>
+                <div className="text-xs text-[#1a4731]/50 mb-1">{TEAMS.rwb.country}</div>
+                <div className="text-xs text-[#1a4731]/45 mb-3">Captain: {TEAMS.rwb.captain}</div>
+                <div className="text-blue-700 font-semibold text-xs group-hover:underline">
+                  Picks First →
+                </div>
               </div>
             </button>
 
-            {/* Team GWR button */}
+            {/* Team GWR — Mexico */}
             <button
               onClick={() => onSelect('gwr')}
-              className="group text-left rounded-xl border-2 border-gray-200 hover:border-green-500 bg-gradient-to-b from-green-50 to-red-50 hover:from-green-100 hover:to-red-100 p-5 transition-all duration-150 hover:shadow-md active:scale-[0.98]"
+              className="group text-left rounded-xl border-2 border-gray-200 hover:border-green-500 overflow-hidden transition-all duration-150 hover:shadow-md active:scale-[0.98]"
             >
-              <div className="flex gap-2 mb-2">
-                <span className="text-2xl">🟢</span>
-                <span className="text-2xl">🔴</span>
-              </div>
-              <div className="font-bold text-[#1a4731] text-sm leading-tight mb-1">
-                {TEAMS.gwr.name}
-              </div>
-              <div className="text-xs text-[#1a4731]/55 mb-3">
-                Captain: {TEAMS.gwr.captain}
-              </div>
-              <div className="text-green-700 font-semibold text-xs group-hover:underline">
-                Picks First →
+              <FlagStripe teamId="gwr" height="h-2" />
+              <div className="bg-gradient-to-b from-green-50 to-white group-hover:from-green-100 p-5 transition-colors">
+                <div className="text-4xl mb-2">{TEAMS.gwr.flag}</div>
+                <div className="font-bold text-[#1a4731] text-sm leading-tight mb-0.5">
+                  {TEAMS.gwr.name}
+                </div>
+                <div className="text-xs text-[#1a4731]/50 mb-1">{TEAMS.gwr.country}</div>
+                <div className="text-xs text-[#1a4731]/45 mb-3">Captain: {TEAMS.gwr.captain}</div>
+                <div className="text-green-700 font-semibold text-xs group-hover:underline">
+                  Picks First →
+                </div>
               </div>
             </button>
           </div>
 
-          <div className="px-6 pb-5 text-center text-xs text-[#1a4731]/35">
-            Non-snake draft · 16 total picks · 8 players per team
+          <div className="px-6 pb-5 text-center text-xs text-[#1a4731]/30">
+            Non-snake draft · 14 picks · 7 picks per team · Captains pre-assigned
           </div>
         </div>
       </div>
@@ -245,17 +286,19 @@ export default function DraftPage() {
   }, [draft, hydrated]);
 
   // ── Derived state ──
+  // draftedCount counts only picks made during the draft (excludes pre-assigned captains)
   const draftedCount = useMemo(
-    () => draft.players.filter((p) => p.team !== null).length,
+    () => draft.players.filter((p) => p.pickNumber !== null).length,
     [draft.players]
   );
-  const isDraftComplete = draftedCount === TOTAL_PLAYERS;
+  const isDraftComplete = draftedCount === TOTAL_PICKS;
 
   const currentPickTeam: TeamId | null =
     draft.coinFlipDone && !isDraftComplete
       ? getCurrentPickTeam(draftedCount, draft.firstTeam!)
       : null;
 
+  // Available = not yet assigned (captains are pre-assigned so never appear here)
   const availablePlayers = useMemo(
     () => draft.players.filter((p) => p.team === null),
     [draft.players]
@@ -265,7 +308,11 @@ export default function DraftPage() {
     () =>
       draft.players
         .filter((p) => p.team === 'rwb')
-        .sort((a, b) => (a.pickNumber ?? 0) - (b.pickNumber ?? 0)),
+        .sort((a, b) => {
+          if (a.captain && !b.captain) return -1;
+          if (!a.captain && b.captain) return 1;
+          return (a.pickNumber ?? 0) - (b.pickNumber ?? 0);
+        }),
     [draft.players]
   );
 
@@ -273,7 +320,11 @@ export default function DraftPage() {
     () =>
       draft.players
         .filter((p) => p.team === 'gwr')
-        .sort((a, b) => (a.pickNumber ?? 0) - (b.pickNumber ?? 0)),
+        .sort((a, b) => {
+          if (a.captain && !b.captain) return -1;
+          if (!a.captain && b.captain) return 1;
+          return (a.pickNumber ?? 0) - (b.pickNumber ?? 0);
+        }),
     [draft.players]
   );
 
@@ -357,7 +408,7 @@ export default function DraftPage() {
     }
   };
 
-  // ── Loading state (SSR guard) ──
+  // ── SSR guard ──
   if (!hydrated) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center text-[#1a4731]/40 text-sm">
@@ -372,23 +423,15 @@ export default function DraftPage() {
   }
 
   // ── Phase 2 & 3: Draft Board ──
-  const currentPickGradient =
-    currentPickTeam === 'rwb'
-      ? 'bg-gradient-to-r from-red-700 via-red-800 to-blue-900'
-      : 'bg-gradient-to-r from-green-700 via-green-800 to-red-800';
+  const currentTeamHeaderBg = currentPickTeam === 'rwb' ? 'bg-blue-900' : 'bg-green-900';
+  const actionBg = currentPickTeam === 'rwb' ? 'bg-blue-900' : 'bg-green-900';
 
-  const actionGradient =
-    currentPickTeam === 'rwb'
-      ? 'bg-gradient-to-br from-red-700 to-blue-900'
-      : 'bg-gradient-to-br from-green-700 to-red-800';
-
-  // Build upcoming picks preview (next 4)
+  // Upcoming picks preview (next 3 after current)
   const upcomingPicks: { pickNum: number; team: TeamId }[] = [];
   if (!isDraftComplete && draft.firstTeam) {
-    for (let i = 0; i < Math.min(4, TOTAL_PLAYERS - draftedCount); i++) {
-      const pickNum = draftedCount + 1 + i;
+    for (let i = 1; i < Math.min(4, TOTAL_PICKS - draftedCount); i++) {
       upcomingPicks.push({
-        pickNum,
+        pickNum: draftedCount + 1 + i,
         team: getCurrentPickTeam(draftedCount + i, draft.firstTeam),
       });
     }
@@ -403,13 +446,12 @@ export default function DraftPage() {
             RGAO · Ryder Cup
           </div>
           <h1 className="text-3xl font-bold text-[#1a4731] leading-tight">Draft Dashboard</h1>
-          <p className="text-[#1a4731]/50 text-sm mt-0.5">
-            {TEAMS[draft.firstTeam!].name} picked first
+          <p className="text-[#1a4731]/45 text-sm mt-0.5">
+            {TEAMS[draft.firstTeam!].flag} {TEAMS[draft.firstTeam!].name} picked first
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Undo */}
           {draft.log.length > 0 && (
             <button
               onClick={handleUndo}
@@ -418,7 +460,6 @@ export default function DraftPage() {
               ↩ Undo
             </button>
           )}
-          {/* Reset */}
           {showResetConfirm ? (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
               <span className="text-sm text-red-700 font-medium">Reset all?</span>
@@ -447,82 +488,98 @@ export default function DraftPage() {
         </div>
       </div>
 
-      {/* ── Current Pick Banner ── */}
+      {/* ── On the Clock Banner ── */}
       {!isDraftComplete && currentPickTeam ? (
-        <div
-          className={`mb-5 rounded-xl px-5 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm ${currentPickGradient}`}
-        >
-          <div>
-            <div className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-0.5">
-              On the Clock — Pick {draftedCount + 1} of {TOTAL_PLAYERS}
-            </div>
-            <div className="text-white font-bold text-lg leading-tight">
-              {TEAMS[currentPickTeam].name}
-            </div>
-            <div className="text-white/60 text-sm">Captain: {TEAMS[currentPickTeam].captain}</div>
-          </div>
-
-          <div className="flex items-center gap-6">
-            {/* Upcoming picks */}
-            {upcomingPicks.length > 1 && (
-              <div className="hidden sm:block">
-                <div className="text-white/50 text-xs uppercase tracking-wider mb-1.5">
-                  Upcoming
-                </div>
-                <div className="flex gap-1.5">
-                  {upcomingPicks.slice(1).map(({ pickNum, team }) => (
-                    <div
-                      key={pickNum}
-                      className={`rounded px-2 py-1 text-xs font-semibold ${
-                        team === 'rwb'
-                          ? 'bg-blue-800/60 text-blue-200'
-                          : 'bg-green-800/60 text-green-200'
-                      }`}
-                    >
-                      #{pickNum} {TEAMS[team].shortName}
-                    </div>
-                  ))}
+        <div className="mb-5 rounded-xl overflow-hidden shadow-sm">
+          <FlagStripe teamId={currentPickTeam} height="h-2.5" />
+          <div className={`px-5 py-4 flex flex-wrap items-center justify-between gap-4 ${currentTeamHeaderBg}`}>
+            <div>
+              <div className="text-white/55 text-xs font-semibold uppercase tracking-widest mb-0.5">
+                On the Clock — Pick {draftedCount + 1} of {TOTAL_PICKS}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{TEAMS[currentPickTeam].flag}</span>
+                <div>
+                  <div className="text-white font-bold text-lg leading-tight">
+                    {TEAMS[currentPickTeam].name}
+                  </div>
+                  <div className="text-white/50 text-sm">
+                    Captain: {TEAMS[currentPickTeam].captain} · {TEAMS[currentPickTeam].country}
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Progress */}
-            <div className="text-right">
-              <div className="text-white/60 text-xs">Drafted</div>
-              <div className="text-white font-bold text-2xl tabular-nums leading-none">
-                {draftedCount}
-                <span className="text-white/40 text-base font-normal">/{TOTAL_PLAYERS}</span>
-              </div>
-              <div className="text-white/40 text-xs mt-0.5">
-                RWB {rwbPlayers.length} · GWR {gwrPlayers.length}
+            <div className="flex items-center gap-6">
+              {/* Upcoming picks */}
+              {upcomingPicks.length > 0 && (
+                <div className="hidden sm:block">
+                  <div className="text-white/40 text-xs uppercase tracking-wider mb-1.5">
+                    Upcoming
+                  </div>
+                  <div className="flex gap-1.5">
+                    {upcomingPicks.map(({ pickNum, team }) => (
+                      <div
+                        key={pickNum}
+                        className={`rounded px-2 py-1 text-xs font-semibold ${
+                          team === 'rwb'
+                            ? 'bg-blue-700/60 text-blue-200'
+                            : 'bg-green-700/60 text-green-200'
+                        }`}
+                      >
+                        #{pickNum} {team === 'rwb' ? '🇺🇸' : '🇲🇽'}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Progress */}
+              <div className="text-right">
+                <div className="text-white/45 text-xs">Drafted</div>
+                <div className="text-white font-bold text-2xl tabular-nums leading-none">
+                  {draftedCount}
+                  <span className="text-white/35 text-base font-normal">/{TOTAL_PICKS}</span>
+                </div>
+                <div className="text-white/35 text-xs mt-0.5">
+                  🇺🇸 {rwbPlayers.length} · 🇲🇽 {gwrPlayers.length}
+                </div>
               </div>
             </div>
           </div>
         </div>
       ) : isDraftComplete ? (
-        <div className="mb-5 rounded-xl px-5 py-5 bg-[#1a4731] text-center shadow-sm">
-          <div className="text-[#c9a84c] font-bold text-xl mb-1">🏆 Draft Complete!</div>
-          <div className="text-white/60 text-sm">
-            All 16 players have been drafted. Good luck to both teams!
+        <div className="mb-5 rounded-xl overflow-hidden shadow-sm">
+          <div className="flex h-2.5">
+            <div className="flex-1 bg-red-600" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-blue-700" />
+            <div className="flex-1 bg-green-600" />
+            <div className="flex-1 bg-white" />
+            <div className="flex-1 bg-red-600" />
           </div>
-          <div className="flex justify-center gap-8 mt-3 text-sm">
-            <span className="text-white/70">
-              RWB: <span className="text-white font-bold">{rwbPlayers.length} players</span>
-            </span>
-            <span className="text-white/70">
-              GWR: <span className="text-white font-bold">{gwrPlayers.length} players</span>
-            </span>
+          <div className="bg-[#1a4731] px-5 py-5 text-center">
+            <div className="text-[#c9a84c] font-bold text-xl mb-1">🏆 Draft Complete!</div>
+            <div className="text-white/55 text-sm">
+              All 16 players have been assigned. Good luck to both teams!
+            </div>
+            <div className="flex justify-center gap-8 mt-3 text-sm">
+              <span className="text-white/60">
+                🇺🇸 RWB: <span className="text-white font-bold">{rwbPlayers.length} players</span>
+              </span>
+              <span className="text-white/60">
+                🇲🇽 GWR: <span className="text-white font-bold">{gwrPlayers.length} players</span>
+              </span>
+            </div>
           </div>
         </div>
       ) : null}
 
       {/* ── Main 3-Column Grid ── */}
       <div className="grid lg:grid-cols-3 gap-5">
-        {/* ─ Left: Available Players ─ */}
+        {/* ─ Available Players ─ */}
         <div className="space-y-3">
-          {/* Player panel */}
           <div className="bg-white rounded-2xl border border-[#c9a84c]/20 shadow-sm overflow-hidden">
-            {/* Panel header */}
             <div className="bg-[#1a4731] px-4 py-3 flex items-center justify-between">
               <h2 className="text-[#c9a84c] font-bold text-sm">Available Players</h2>
               <span className="bg-[#c9a84c] text-[#1a4731] text-xs font-bold px-2 py-0.5 rounded-full tabular-nums">
@@ -530,7 +587,7 @@ export default function DraftPage() {
               </span>
             </div>
 
-            {/* Sort & Search controls */}
+            {/* Sort & Search */}
             <div className="px-3 pt-3 pb-2 space-y-2 border-b border-[#f5f0e8]">
               <input
                 type="text"
@@ -577,22 +634,17 @@ export default function DraftPage() {
                   return (
                     <button
                       key={player.id}
-                      onClick={() =>
-                        setSelectedPlayer(isSelected ? null : player)
-                      }
+                      onClick={() => setSelectedPlayer(isSelected ? null : player)}
                       disabled={isDraftComplete}
                       className={`w-full px-4 py-2.5 text-left transition-colors border-l-4 flex items-center justify-between gap-2 ${
                         isSelected
-                          ? 'bg-[#c9a84c]/12 border-l-[#c9a84c]'
+                          ? 'bg-[#c9a84c]/10 border-l-[#c9a84c]'
                           : 'border-l-transparent hover:bg-[#f5f0e8] disabled:opacity-40 disabled:cursor-not-allowed'
                       }`}
                     >
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-semibold text-[#1a4731] text-sm leading-tight">
-                            {player.name}
-                          </span>
-                          {player.captain && <CaptainBadge />}
+                        <div className="font-semibold text-[#1a4731] text-sm leading-tight">
+                          {player.name}
                         </div>
                         <div className="text-xs text-[#1a4731]/45 mt-0.5">
                           HCP {player.handicap}
@@ -608,55 +660,50 @@ export default function DraftPage() {
             </div>
           </div>
 
-          {/* ─ Draft Action Panel ─ */}
+          {/* Draft Action Panel */}
           {selectedPlayer && currentPickTeam && !isDraftComplete && (
-            <div className={`rounded-2xl p-4 text-white shadow-md ${actionGradient}`}>
-              <div className="mb-3">
-                <div className="text-white/55 text-xs font-semibold uppercase tracking-wider mb-0.5">
-                  Selected
+            <div className={`rounded-2xl overflow-hidden shadow-md`}>
+              <FlagStripe teamId={currentPickTeam} height="h-2" />
+              <div className={`p-4 text-white ${actionBg}`}>
+                <div className="mb-3">
+                  <div className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-0.5">
+                    Selected
+                  </div>
+                  <div className="font-bold text-lg leading-tight">{selectedPlayer.name}</div>
+                  <div className="text-white/50 text-sm">HCP {selectedPlayer.handicap}</div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-lg leading-tight">{selectedPlayer.name}</span>
-                  {selectedPlayer.captain && (
-                    <span className="text-[10px] font-bold bg-[#c9a84c]/25 text-[#c9a84c] px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0">
-                      C
-                    </span>
-                  )}
+                <div className="bg-white/10 rounded-lg px-3 py-2 mb-3 flex items-center gap-2">
+                  <span className="text-lg">{TEAMS[currentPickTeam].flag}</span>
+                  <span className="text-white text-sm font-semibold">{TEAMS[currentPickTeam].name}</span>
                 </div>
-                <div className="text-white/55 text-sm">HCP {selectedPlayer.handicap}</div>
+                <button
+                  onClick={() => handleDraft(selectedPlayer)}
+                  className="w-full bg-[#c9a84c] text-[#1a4731] font-bold text-sm py-2.5 rounded-lg hover:bg-[#b8943a] transition-colors active:scale-[0.98]"
+                >
+                  Confirm Pick #{draftedCount + 1}
+                </button>
+                <button
+                  onClick={() => setSelectedPlayer(null)}
+                  className="w-full mt-2 text-white/40 text-xs hover:text-white/70 transition-colors py-1"
+                >
+                  Cancel
+                </button>
               </div>
-              <div className="bg-white/10 rounded-lg px-3 py-2 mb-3 text-sm">
-                <span className="text-white/60">Drafting to: </span>
-                <span className="text-white font-semibold">{TEAMS[currentPickTeam].name}</span>
-              </div>
-              <button
-                onClick={() => handleDraft(selectedPlayer)}
-                className="w-full bg-[#c9a84c] text-[#1a4731] font-bold text-sm py-2.5 rounded-lg hover:bg-[#b8943a] transition-colors active:scale-[0.98]"
-              >
-                Confirm Pick #{draftedCount + 1}
-              </button>
-              <button
-                onClick={() => setSelectedPlayer(null)}
-                className="w-full mt-2 text-white/45 text-xs hover:text-white/75 transition-colors py-1"
-              >
-                Cancel
-              </button>
             </div>
           )}
 
-          {/* Prompt to select if no player chosen */}
+          {/* Prompt when nothing selected */}
           {!selectedPlayer && currentPickTeam && !isDraftComplete && (
-            <div className="rounded-xl border-2 border-dashed border-[#c9a84c]/30 px-4 py-5 text-center">
-              <div className="text-[#1a4731]/40 text-sm">
-                Select a player above to make Pick #{draftedCount + 1}
+            <div className="rounded-xl border-2 border-dashed border-[#c9a84c]/25 px-4 py-5 text-center">
+              <div className="text-[#1a4731]/35 text-sm">
+                Select a player to make Pick #{draftedCount + 1}
               </div>
             </div>
           )}
         </div>
 
-        {/* ─ Right: Team Boards + Draft Log ─ */}
+        {/* ─ Team Boards + Draft Log ─ */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Team boards */}
           <div className="grid sm:grid-cols-2 gap-4">
             <TeamBoard
               teamId="rwb"
@@ -676,8 +723,8 @@ export default function DraftPage() {
           <div className="bg-white rounded-2xl border border-[#c9a84c]/20 shadow-sm overflow-hidden">
             <div className="bg-[#1a4731] px-4 py-3 flex items-center justify-between">
               <h3 className="text-[#c9a84c] font-bold text-sm">Draft Log</h3>
-              <span className="text-[#c9a84c]/50 text-xs tabular-nums">
-                {draft.log.length}/{TOTAL_PLAYERS} picks
+              <span className="text-[#c9a84c]/45 text-xs tabular-nums">
+                {draft.log.length}/{TOTAL_PICKS} picks
               </span>
             </div>
             <div className="divide-y divide-[#f5f0e8] max-h-56 overflow-y-auto">
@@ -688,7 +735,6 @@ export default function DraftPage() {
               ) : (
                 draft.log.map((entry, i) => (
                   <div key={i} className="px-4 py-2.5 flex items-center gap-3">
-                    {/* Pick badge */}
                     <span
                       className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 tabular-nums ${
                         entry.team === 'rwb'
@@ -698,23 +744,15 @@ export default function DraftPage() {
                     >
                       #{entry.pick}
                     </span>
-
-                    {/* Player */}
                     <div className="min-w-0 flex-1">
-                      <span className="font-semibold text-[#1a4731] text-sm">{entry.playerName}</span>
+                      <span className="font-semibold text-[#1a4731] text-sm">
+                        {entry.playerName}
+                      </span>
                       <span className="text-[#1a4731]/40 text-xs ml-2">HCP {entry.handicap}</span>
                     </div>
-
-                    {/* Team + time */}
                     <div className="text-right shrink-0">
-                      <div
-                        className={`text-xs font-bold ${
-                          entry.team === 'rwb' ? 'text-blue-700' : 'text-green-700'
-                        }`}
-                      >
-                        {TEAMS[entry.team].shortName}
-                      </div>
-                      <div className="text-[#1a4731]/25 text-xs">{entry.timestamp}</div>
+                      <div className="text-base leading-none">{TEAMS[entry.team].flag}</div>
+                      <div className="text-[#1a4731]/25 text-xs mt-0.5">{entry.timestamp}</div>
                     </div>
                   </div>
                 ))
