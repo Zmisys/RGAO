@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-golf-green: #1a4731;
+  --color-golf-gold: #c9a84c;
+  --color-golf-cream: #f5f0e8;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
