@@ -239,6 +239,7 @@ function PickTimer({ pickNumber }: { pickNumber: number }) {
     intervalRef.current = null;
     setRemaining(0);
     setStatus('in');
+    audioRef.current?.play().catch(() => {});
   };
 
   const seconds = Math.floor(remaining / 1000);
