@@ -9,3 +9,8 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Hero logo golden glow */
+.hero-logo-glow {
+  filter: drop-shadow(0 0 40px rgba(201, 168, 76, 0.3));
+}
