@@ -1,11 +1,18 @@
 import Link from 'next/link';
 
+import logo2021 from '../../public/logos/rgao-2021.png';
+import logo2022 from '../../public/logos/rgao-2022.png';
+import logo2023 from '../../public/logos/rgao-2023.png';
+import logo2024 from '../../public/logos/rgao-2024.png';
+import logo2025 from '../../public/logos/rgao-2025.png';
+import logo2026 from '../../public/logos/rgao-2026.png';
+
 const pastTournaments = [
-  { year: 2021, location: 'Palm Springs, CA', logo: '/logos/rgao-2021.png' },
-  { year: 2022, location: 'Pinehurst, NC', logo: '/logos/rgao-2022.png' },
-  { year: 2023, location: 'Scottsdale, AZ', logo: '/logos/rgao-2023.png' },
-  { year: 2024, location: 'San Diego, CA', logo: '/logos/rgao-2024.png' },
-  { year: 2025, location: 'Charleston, SC', logo: '/logos/rgao-2025.png' },
+  { year: 2021, location: 'Palm Springs, CA', logo: logo2021 },
+  { year: 2022, location: 'Pinehurst, NC', logo: logo2022 },
+  { year: 2023, location: 'Scottsdale, AZ', logo: logo2023 },
+  { year: 2024, location: 'San Diego, CA', logo: logo2024 },
+  { year: 2025, location: 'Charleston, SC', logo: logo2025 },
 ];
 
 const courses = [
@@ -84,7 +91,7 @@ export default function HomePage() {
           {/* Main 2026 logo */}
           <div className="flex justify-center mb-8">
             <img
-              src="/logos/rgao-2026.png"
+              src={logo2026.src}
               alt="RGAO 2026 — 6th Annual — Cabo San Lucas, Mexico"
               className="w-48 h-60 md:w-64 md:h-80 object-contain drop-shadow-2xl hero-logo-glow"
             />
@@ -320,7 +327,7 @@ export default function HomePage() {
               <div key={t.year} className="flex flex-col items-center group">
                 <div className="w-16 h-20 md:w-20 md:h-28 mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
                   <img
-                    src={t.logo}
+                    src={t.logo.src}
                     alt={`RGAO ${t.year}`}
                     className="w-full h-full object-contain"
                   />
@@ -334,7 +341,7 @@ export default function HomePage() {
             <div className="flex flex-col items-center">
               <div className="w-20 h-28 md:w-24 md:h-32 mb-3 ring-2 ring-[#c9a84c]/30 rounded-xl p-1">
                 <img
-                  src="/logos/rgao-2026.png"
+                  src={logo2026.src}
                   alt="RGAO 2026 — Cabo San Lucas"
                   className="w-full h-full object-contain"
                 />
@@ -442,7 +449,7 @@ export default function HomePage() {
         <div className="relative max-w-3xl mx-auto">
           <div className="flex justify-center mb-6">
             <img
-              src="/logos/rgao-2026.png"
+              src={logo2026.src}
               alt="RGAO 2026"
               className="w-20 h-28 object-contain opacity-80"
             />
