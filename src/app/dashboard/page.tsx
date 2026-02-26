@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   TeamId,
   TournamentRound,
@@ -12,8 +12,7 @@ import {
   formatPoints,
 } from '@/data/players';
 
-const STORAGE_KEY = 'rgao-leaderboard-v2';
-const DRAFT_KEY = 'rgao-ryder-cup-draft-v1';
+const POLL_INTERVAL = 10_000; // refresh every 10 seconds for live updates
 
 function deepClone(s: LeaderboardState): LeaderboardState {
   return JSON.parse(JSON.stringify(s));
@@ -36,61 +35,71 @@ export default function DashboardPage() {
   const [state, setState] = useState<LeaderboardState>(() => createInitialState());
   const [editState, setEditState] = useState<LeaderboardState>(() => createInitialState());
 
-  useEffect(() => {
-    let loaded: LeaderboardState | null = null;
+  const editModeRef = useRef(false);
+  editModeRef.current = editMode;
 
+  const fetchLeaderboard = useCallback(async () => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) loaded = JSON.parse(saved) as LeaderboardState;
-    } catch { /* ignore */ }
-
-    if (!loaded) {
-      loaded = createInitialState();
-      try {
-        const draft = localStorage.getItem(DRAFT_KEY);
-        if (draft) {
-          const draftState = JSON.parse(draft);
-          if (draftState.players) {
-            for (const dp of draftState.players) {
-              const player = loaded.players.find(p => p.name === dp.name);
-              if (player && dp.team) {
-                player.team = dp.team === 'rwb' ? 'rp' : dp.team === 'gwr' ? 'dom' : null;
-              }
-            }
-          }
-        }
-      } catch { /* ignore */ }
-    }
-
-    setState(loaded);
-    setEditState(deepClone(loaded));
-    setHydrated(true);
+      const res = await fetch('/api/leaderboard');
+      if (res.ok) {
+        const data = (await res.json()) as LeaderboardState;
+        return data;
+      }
+    } catch { /* ignore fetch errors */ }
+    return null;
   }, []);
+
+  // Initial load from server
+  useEffect(() => {
+    fetchLeaderboard().then(data => {
+      const loaded = data ?? createInitialState();
+      setState(loaded);
+      setEditState(deepClone(loaded));
+      setHydrated(true);
+    });
+  }, [fetchLeaderboard]);
+
+  // Auto-poll for live updates when not in edit mode
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (editModeRef.current) return; // don't overwrite while admin is editing
+      const data = await fetchLeaderboard();
+      if (data) setState(data);
+    }, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchLeaderboard]);
 
   /* ── handlers ── */
   const handleEnterEdit = () => {
     setEditState(deepClone(state));
     setEditMode(true);
   };
-  const handleSave = () => {
+  const handleSave = async () => {
     setState(editState);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(editState)); } catch { /* ignore */ }
     setEditMode(false);
+    // Persist to server so all visitors see the update immediately
+    try {
+      await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editState),
+      });
+    } catch { /* ignore */ }
   };
   const handleCancel = () => {
     setEditState(deepClone(state));
     setEditMode(false);
   };
-  const handleSyncDraft = () => {
+  const handleSyncDraft = async () => {
     try {
-      const draft = localStorage.getItem(DRAFT_KEY);
-      if (!draft) return;
-      const draftState = JSON.parse(draft);
+      const res = await fetch('/api/draft');
+      if (!res.ok) return;
+      const draftState = await res.json();
       if (!draftState.players) return;
       setEditState(prev => {
         const next = deepClone(prev);
         for (const dp of draftState.players) {
-          const player = next.players.find(p => p.name === dp.name);
+          const player = next.players.find((p: { name: string }) => p.name === dp.name);
           if (player && dp.team) {
             player.team = dp.team === 'rwb' ? 'rp' : dp.team === 'gwr' ? 'dom' : null;
           }
