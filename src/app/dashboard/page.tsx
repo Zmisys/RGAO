@@ -19,6 +19,17 @@ function deepClone(s: LeaderboardState): LeaderboardState {
   return JSON.parse(JSON.stringify(s));
 }
 
+const FORMAT_PRESETS = [
+  { label: '2v2 Cart Score (net)', matchupSize: 2, matchupCount: 4 },
+  { label: '2v2 Scramble', matchupSize: 2, matchupCount: 4 },
+  { label: '2v2 Best Ball (net)', matchupSize: 2, matchupCount: 4 },
+  { label: '2v2 Alternate Shot', matchupSize: 2, matchupCount: 4 },
+  { label: '2v2 Shamble', matchupSize: 2, matchupCount: 4 },
+  { label: '1v1 Match Play (net)', matchupSize: 1, matchupCount: 8 },
+  { label: '1v1 Stroke Play (net)', matchupSize: 1, matchupCount: 8 },
+  { label: '1v1 Stroke Play (gross)', matchupSize: 1, matchupCount: 8 },
+];
+
 export default function DashboardPage() {
   const [hydrated, setHydrated] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -120,10 +131,61 @@ export default function DashboardPage() {
     });
   };
 
+  const updateRoundField = (ri: number, field: keyof TournamentRound, value: string | number) => {
+    setEditState(prev => {
+      const next = deepClone(prev);
+      (next.rounds[ri] as unknown as Record<string, unknown>)[field] = value;
+      return next;
+    });
+  };
+
+  const updateRoundFormat = (ri: number, formatLabel: string) => {
+    setEditState(prev => {
+      const next = deepClone(prev);
+      const round = next.rounds[ri];
+      const preset = FORMAT_PRESETS.find(p => p.label === formatLabel);
+      if (preset) {
+        const structureChanged = round.matchupSize !== preset.matchupSize || round.matchupCount !== preset.matchupCount;
+        round.format = preset.label;
+        if (structureChanged) {
+          round.matchupSize = preset.matchupSize;
+          round.matchupCount = preset.matchupCount;
+          round.pointsAvailable = preset.matchupCount;
+          round.matchups = Array.from({ length: preset.matchupCount }, () => ({
+            rpPlayers: Array.from({ length: preset.matchupSize }, () => ''),
+            domPlayers: Array.from({ length: preset.matchupSize }, () => ''),
+            result: '',
+            winner: null,
+          }));
+        }
+      }
+      return next;
+    });
+  };
+
+  const updateMatchupStructure = (ri: number, newSize: number, newCount: number) => {
+    setEditState(prev => {
+      const next = deepClone(prev);
+      const round = next.rounds[ri];
+      round.matchupSize = newSize;
+      round.matchupCount = newCount;
+      round.pointsAvailable = newCount;
+      round.matchups = Array.from({ length: newCount }, () => ({
+        rpPlayers: Array.from({ length: newSize }, () => ''),
+        domPlayers: Array.from({ length: newSize }, () => ''),
+        result: '',
+        winner: null,
+      }));
+      return next;
+    });
+  };
+
   /* ── derived ── */
   const current = editMode ? editState : state;
   const { players, rounds } = current;
   const totalPts = getTotalPoints(rounds);
+  const totalPointsAvailable = rounds.reduce((s, r) => s + r.pointsAvailable, 0);
+  const winTarget = totalPointsAvailable > 0 ? Math.floor(totalPointsAvailable / 2) + 0.5 : 10.5;
 
   const sortTeam = (tid: TeamId) =>
     players
@@ -146,7 +208,7 @@ export default function DashboardPage() {
     return teamNames.filter(n => !used.has(n));
   };
 
-  const winner = totalPts.rp >= 10.5 ? 'rp' : totalPts.dom >= 10.5 ? 'dom' : null;
+  const winner = totalPts.rp >= winTarget ? 'rp' : totalPts.dom >= winTarget ? 'dom' : null;
 
   if (!hydrated) {
     return (
@@ -165,7 +227,7 @@ export default function DashboardPage() {
             2026 RGAO &mdash; Cabo San Lucas
           </div>
           <h1 className="text-4xl font-bold text-[#1a4731] mb-1">Team Leaderboard</h1>
-          <p className="text-[#1a4731]/60">16 Players &middot; 4 Rounds &middot; 20 Points &middot; First to 10.5 Wins</p>
+          <p className="text-[#1a4731]/60">{players.length} Players &middot; {rounds.length} Rounds &middot; {totalPointsAvailable} Points &middot; First to {formatPoints(winTarget)} Wins</p>
         </div>
         <div className="flex items-center gap-2">
           {editMode ? (
@@ -215,7 +277,7 @@ export default function DashboardPage() {
           <div className="text-center px-4">
             <div className="text-[#c9a84c] text-xl font-black">VS</div>
             {!winner && (
-              <div className="text-white/30 text-[10px] mt-1 leading-tight">FIRST TO<br />10.5 WINS</div>
+              <div className="text-white/30 text-[10px] mt-1 leading-tight">FIRST TO<br />{formatPoints(winTarget)} WINS</div>
             )}
           </div>
           <div className="text-center flex-1">
@@ -230,21 +292,21 @@ export default function DashboardPage() {
           {totalPts.rp > 0 && (
             <div
               className="absolute left-0 top-0 h-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-500"
-              style={{ width: `${(totalPts.rp / 20) * 100}%` }}
+              style={{ width: `${(totalPts.rp / (totalPointsAvailable || 20)) * 100}%` }}
             />
           )}
           {totalPts.dom > 0 && (
             <div
               className="absolute right-0 top-0 h-full bg-gradient-to-l from-green-600 to-green-500 transition-all duration-500"
-              style={{ width: `${(totalPts.dom / 20) * 100}%` }}
+              style={{ width: `${(totalPts.dom / (totalPointsAvailable || 20)) * 100}%` }}
             />
           )}
-          <div className="absolute top-0 h-full w-0.5 bg-[#c9a84c]" style={{ left: '52.5%' }} />
+          <div className="absolute top-0 h-full w-0.5 bg-[#c9a84c]" style={{ left: `${totalPointsAvailable > 0 ? (winTarget / totalPointsAvailable) * 100 : 52.5}%` }} />
         </div>
         <div className="flex justify-between text-[10px] text-white/30 mt-1.5 px-1">
           <span>0</span>
-          <span className="text-[#c9a84c]/60">10.5</span>
-          <span>20</span>
+          <span className="text-[#c9a84c]/60">{formatPoints(winTarget)}</span>
+          <span>{totalPointsAvailable}</span>
         </div>
       </div>
 
@@ -283,7 +345,7 @@ export default function DashboardPage() {
             <tfoot>
               <tr className="bg-[#1a4731]">
                 <td colSpan={3} className="px-4 py-3 text-sm font-bold text-[#c9a84c]">TOURNAMENT TOTAL</td>
-                <td className="px-4 py-3 text-center text-sm font-bold text-[#c9a84c]/60">20</td>
+                <td className="px-4 py-3 text-center text-sm font-bold text-[#c9a84c]/60">{totalPointsAvailable}</td>
                 <td className="px-4 py-3 text-center text-xl font-black text-red-400">{formatPoints(totalPts.rp)}</td>
                 <td className="px-4 py-3 text-center text-xl font-black text-green-400">{formatPoints(totalPts.dom)}</td>
               </tr>
@@ -394,17 +456,165 @@ export default function DashboardPage() {
           <div key={round.id} className="bg-white rounded-2xl shadow-sm border border-[#c9a84c]/20 overflow-hidden mb-6">
             {/* round header */}
             <div className="bg-[#1a4731] px-6 py-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h3 className="text-[#c9a84c] font-bold text-lg">{round.name}: {round.course}</h3>
-                  <div className="text-white/50 text-sm mt-0.5">
-                    {round.format} &middot; {round.day} {round.time}
-                    {round.teeBox && <> &middot; Tee&nbsp;Box&nbsp;{round.teeBox}</>}
-                    {round.yardage && <> &middot; {round.yardage}&nbsp;yards</>}
+              {editMode ? (
+                <div className="space-y-3">
+                  {/* Row 1: Round name + Course */}
+                  <div className="flex flex-wrap gap-3">
+                    <input
+                      value={editState.rounds[ri].name}
+                      onChange={e => updateRoundField(ri, 'name', e.target.value)}
+                      className="text-[#c9a84c] font-bold text-lg bg-white/10 rounded-lg px-3 py-1.5 border border-[#c9a84c]/30 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] flex-1 min-w-[120px] placeholder-[#c9a84c]/30"
+                      placeholder="Round name"
+                    />
+                    <input
+                      value={editState.rounds[ri].course}
+                      onChange={e => updateRoundField(ri, 'course', e.target.value)}
+                      className="text-white font-medium bg-white/10 rounded-lg px-3 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] flex-[2] min-w-[180px] placeholder-white/30"
+                      placeholder="Course name"
+                    />
+                  </div>
+                  {/* Row 2: Format selector */}
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <label className="text-white/50 text-xs uppercase tracking-wider shrink-0">Format</label>
+                    <select
+                      value={FORMAT_PRESETS.some(p => p.label === editState.rounds[ri].format) ? editState.rounds[ri].format : '__custom__'}
+                      onChange={e => {
+                        if (e.target.value !== '__custom__') {
+                          updateRoundFormat(ri, e.target.value);
+                        }
+                      }}
+                      className="text-sm bg-white/10 text-white rounded-lg px-3 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] flex-1 min-w-[200px]"
+                    >
+                      {FORMAT_PRESETS.map(p => (
+                        <option key={p.label} value={p.label} className="text-[#1a4731]">{p.label}</option>
+                      ))}
+                      <option value="__custom__" className="text-[#1a4731]">Custom...</option>
+                    </select>
+                    {!FORMAT_PRESETS.some(p => p.label === editState.rounds[ri].format) && (
+                      <input
+                        value={editState.rounds[ri].format}
+                        onChange={e => updateRoundField(ri, 'format', e.target.value)}
+                        className="text-sm bg-white/10 text-white rounded-lg px-3 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] flex-1 min-w-[180px] placeholder-white/30"
+                        placeholder="Custom format name"
+                      />
+                    )}
+                  </div>
+                  {/* Row 3: Day, Time, Tee Box, Yardage */}
+                  <div className="flex flex-wrap gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-white/50 text-xs uppercase tracking-wider">Day</label>
+                      <input
+                        value={editState.rounds[ri].day}
+                        onChange={e => updateRoundField(ri, 'day', e.target.value)}
+                        className="text-sm bg-white/10 text-white rounded-lg px-2 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] w-28 placeholder-white/30"
+                        placeholder="Day"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-white/50 text-xs uppercase tracking-wider">Time</label>
+                      <input
+                        value={editState.rounds[ri].time}
+                        onChange={e => updateRoundField(ri, 'time', e.target.value)}
+                        className="text-sm bg-white/10 text-white rounded-lg px-2 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] w-24 placeholder-white/30"
+                        placeholder="Time"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-white/50 text-xs uppercase tracking-wider">Tee Box</label>
+                      <input
+                        value={editState.rounds[ri].teeBox}
+                        onChange={e => updateRoundField(ri, 'teeBox', e.target.value)}
+                        className="text-sm bg-white/10 text-white rounded-lg px-2 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] w-20 placeholder-white/30"
+                        placeholder="Tee"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-white/50 text-xs uppercase tracking-wider">Yardage</label>
+                      <input
+                        value={editState.rounds[ri].yardage}
+                        onChange={e => updateRoundField(ri, 'yardage', e.target.value)}
+                        className="text-sm bg-white/10 text-white rounded-lg px-2 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] w-24 placeholder-white/30"
+                        placeholder="Yards"
+                      />
+                    </div>
+                  </div>
+                  {/* Row 4: Matchup structure + Points */}
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-white/50 text-xs uppercase tracking-wider">Type</label>
+                      <div className="flex rounded-lg overflow-hidden border border-white/20">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editState.rounds[ri].matchupSize !== 2) {
+                              updateMatchupStructure(ri, 2, Math.max(Math.ceil(editState.rounds[ri].matchupCount / 2), 1));
+                            }
+                          }}
+                          className={`px-3 py-1.5 text-xs font-bold transition-colors ${
+                            editState.rounds[ri].matchupSize === 2
+                              ? 'bg-[#c9a84c] text-[#1a4731]'
+                              : 'bg-white/10 text-white/50 hover:bg-white/20'
+                          }`}
+                        >
+                          2v2
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editState.rounds[ri].matchupSize !== 1) {
+                              updateMatchupStructure(ri, 1, editState.rounds[ri].matchupCount * 2);
+                            }
+                          }}
+                          className={`px-3 py-1.5 text-xs font-bold transition-colors ${
+                            editState.rounds[ri].matchupSize === 1
+                              ? 'bg-[#c9a84c] text-[#1a4731]'
+                              : 'bg-white/10 text-white/50 hover:bg-white/20'
+                          }`}
+                        >
+                          1v1
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-white/50 text-xs uppercase tracking-wider">Matches</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={16}
+                        value={editState.rounds[ri].matchupCount}
+                        onChange={e => {
+                          const count = Math.max(1, Math.min(16, parseInt(e.target.value) || 1));
+                          updateMatchupStructure(ri, editState.rounds[ri].matchupSize, count);
+                        }}
+                        className="text-sm bg-white/10 text-white rounded-lg px-2 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] w-16 text-center"
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-white/50 text-xs uppercase tracking-wider">Points</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={editState.rounds[ri].pointsAvailable}
+                        onChange={e => updateRoundField(ri, 'pointsAvailable', Math.max(1, parseInt(e.target.value) || 1))}
+                        className="text-sm bg-white/10 text-white rounded-lg px-2 py-1.5 border border-white/20 focus:outline-none focus:ring-1 focus:ring-[#c9a84c] w-16 text-center"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="text-[#c9a84c]/60 text-sm font-medium">{round.pointsAvailable} points available</div>
-              </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-[#c9a84c] font-bold text-lg">{round.name}: {round.course}</h3>
+                    <div className="text-white/50 text-sm mt-0.5">
+                      {round.format} &middot; {round.day} {round.time}
+                      {round.teeBox && <> &middot; Tee&nbsp;Box&nbsp;{round.teeBox}</>}
+                      {round.yardage && <> &middot; {round.yardage}&nbsp;yards</>}
+                    </div>
+                  </div>
+                  <div className="text-[#c9a84c]/60 text-sm font-medium">{round.pointsAvailable} points available</div>
+                </div>
+              )}
             </div>
 
             {/* matchup table */}
@@ -430,17 +640,19 @@ export default function DashboardPage() {
                             {matchup.rpPlayers.map((_, si) => {
                               const val = editState.rounds[ri].matchups[mi].rpPlayers[si];
                               const avail = getAvailable(ri, mi, 'rp', si);
-                              const opts = val && !avail.includes(val) ? [val, ...avail] : avail;
                               return (
-                                <select
-                                  key={si}
-                                  value={val}
-                                  onChange={e => updateMatchupPlayer(ri, mi, 'rp', si, e.target.value)}
-                                  className="text-sm border border-red-200 rounded-lg px-2 py-1.5 bg-red-50 text-[#1a4731] focus:outline-none focus:ring-1 focus:ring-red-400 min-w-[140px]"
-                                >
-                                  <option value="">Select player</option>
-                                  {opts.map(n => <option key={n} value={n}>{n}</option>)}
-                                </select>
+                                <div key={si} className="relative">
+                                  <input
+                                    list={`rp-${ri}-${mi}-${si}`}
+                                    value={val}
+                                    onChange={e => updateMatchupPlayer(ri, mi, 'rp', si, e.target.value)}
+                                    placeholder="Type or select player"
+                                    className="text-sm border border-red-200 rounded-lg px-2 py-1.5 bg-red-50 text-[#1a4731] focus:outline-none focus:ring-1 focus:ring-red-400 min-w-[140px] w-full"
+                                  />
+                                  <datalist id={`rp-${ri}-${mi}-${si}`}>
+                                    {avail.map(n => <option key={n} value={n} />)}
+                                  </datalist>
+                                </div>
                               );
                             })}
                           </div>
@@ -487,17 +699,19 @@ export default function DashboardPage() {
                             {matchup.domPlayers.map((_, si) => {
                               const val = editState.rounds[ri].matchups[mi].domPlayers[si];
                               const avail = getAvailable(ri, mi, 'dom', si);
-                              const opts = val && !avail.includes(val) ? [val, ...avail] : avail;
                               return (
-                                <select
-                                  key={si}
-                                  value={val}
-                                  onChange={e => updateMatchupPlayer(ri, mi, 'dom', si, e.target.value)}
-                                  className="text-sm border border-green-200 rounded-lg px-2 py-1.5 bg-green-50 text-[#1a4731] focus:outline-none focus:ring-1 focus:ring-green-400 min-w-[140px]"
-                                >
-                                  <option value="">Select player</option>
-                                  {opts.map(n => <option key={n} value={n}>{n}</option>)}
-                                </select>
+                                <div key={si} className="relative">
+                                  <input
+                                    list={`dom-${ri}-${mi}-${si}`}
+                                    value={val}
+                                    onChange={e => updateMatchupPlayer(ri, mi, 'dom', si, e.target.value)}
+                                    placeholder="Type or select player"
+                                    className="text-sm border border-green-200 rounded-lg px-2 py-1.5 bg-green-50 text-[#1a4731] focus:outline-none focus:ring-1 focus:ring-green-400 min-w-[140px] w-full"
+                                  />
+                                  <datalist id={`dom-${ri}-${mi}-${si}`}>
+                                    {avail.map(n => <option key={n} value={n} />)}
+                                  </datalist>
+                                </div>
                               );
                             })}
                           </div>
