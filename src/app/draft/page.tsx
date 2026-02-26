@@ -8,31 +8,30 @@ import {
   type DraftState,
   TEAMS,
   TOTAL_PICKS,
-  STORAGE_KEY,
   getInitialDraftState,
   getCurrentPickTeam,
 } from '@/data/ryder-cup';
 
-// ─── localStorage helpers ─────────────────────────────────────────────────────
+const POLL_INTERVAL = 10_000; // refresh every 10 seconds for live updates
 
-function loadState(): DraftState | null {
-  if (typeof window === 'undefined') return null;
+// ─── API helpers ──────────────────────────────────────────────────────────────
+
+async function loadStateFromAPI(): Promise<DraftState | null> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as DraftState;
-  } catch {
-    return null;
-  }
+    const res = await fetch('/api/draft');
+    if (res.ok) return (await res.json()) as DraftState;
+  } catch { /* ignore */ }
+  return null;
 }
 
-function saveState(state: DraftState) {
-  if (typeof window === 'undefined') return;
+async function saveStateToAPI(state: DraftState) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // ignore storage errors
-  }
+    await fetch('/api/draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state),
+    });
+  } catch { /* ignore */ }
 }
 
 // ─── Flag stripe component ────────────────────────────────────────────────────
@@ -390,17 +389,33 @@ export default function DraftPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  // ── Hydrate from localStorage ──
+  const isLocalChange = useRef(false);
+
+  // ── Hydrate from server ──
   useEffect(() => {
-    const saved = loadState();
-    if (saved) setDraft(saved);
-    setHydrated(true);
+    loadStateFromAPI().then(saved => {
+      if (saved) setDraft(saved);
+      setHydrated(true);
+    });
   }, []);
 
-  // ── Persist to localStorage ──
+  // ── Persist to server on changes ──
   useEffect(() => {
-    if (hydrated) saveState(draft);
+    if (hydrated && isLocalChange.current) {
+      saveStateToAPI(draft);
+      isLocalChange.current = false;
+    }
   }, [draft, hydrated]);
+
+  // ── Auto-poll for live updates ──
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (isLocalChange.current) return; // skip if we just made a change
+      const data = await loadStateFromAPI();
+      if (data) setDraft(data);
+    }, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, []);
 
   // ── Derived state ──
   // draftedCount counts only picks made during the draft (excludes pre-assigned captains)
@@ -462,6 +477,7 @@ export default function DraftPage() {
 
   // ── Actions ──
   const handleCoinFlip = useCallback((team: TeamId) => {
+    isLocalChange.current = true;
     setDraft((prev) => ({ ...prev, firstTeam: team, coinFlipDone: true }));
   }, []);
 
@@ -480,6 +496,7 @@ export default function DraftPage() {
         handicap: player.handicap,
         timestamp,
       };
+      isLocalChange.current = true;
       setDraft((prev) => ({
         ...prev,
         players: prev.players.map((p) =>
@@ -495,6 +512,7 @@ export default function DraftPage() {
   const handleUndo = useCallback(() => {
     if (draft.log.length === 0) return;
     const last = draft.log[0];
+    isLocalChange.current = true;
     setDraft((prev) => ({
       ...prev,
       players: prev.players.map((p) =>
@@ -506,14 +524,11 @@ export default function DraftPage() {
   }, [draft.log]);
 
   const handleReset = useCallback(() => {
-    setDraft(getInitialDraftState());
+    const initial = getInitialDraftState();
+    isLocalChange.current = true;
+    setDraft(initial);
     setSelectedPlayer(null);
     setShowResetConfirm(false);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
   }, []);
 
   const toggleSort = (key: SortKey) => {
