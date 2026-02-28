@@ -34,6 +34,9 @@ export default function DashboardPage() {
   const [editMode, setEditMode] = useState(false);
   const [state, setState] = useState<LeaderboardState>(() => createInitialState());
   const [editState, setEditState] = useState<LeaderboardState>(() => createInitialState());
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   const editModeRef = useRef(false);
   editModeRef.current = editMode;
@@ -71,6 +74,36 @@ export default function DashboardPage() {
 
   /* ── handlers ── */
   const handleEnterEdit = () => {
+    // If already authenticated this session, go straight to edit mode
+    if (adminPassword) {
+      setEditState(deepClone(state));
+      setEditMode(true);
+    } else {
+      setShowPasswordPrompt(true);
+      setPasswordError('');
+    }
+  };
+  const handlePasswordSubmit = async () => {
+    // Verify password against the server with a lightweight test request
+    try {
+      const res = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': adminPassword,
+        },
+        body: JSON.stringify(state), // send current state (no-op save, just to verify)
+      });
+      if (res.status === 401) {
+        setPasswordError('Incorrect password');
+        return;
+      }
+    } catch {
+      setPasswordError('Could not verify — try again');
+      return;
+    }
+    setShowPasswordPrompt(false);
+    setPasswordError('');
     setEditState(deepClone(state));
     setEditMode(true);
   };
@@ -81,7 +114,10 @@ export default function DashboardPage() {
     try {
       await fetch('/api/leaderboard', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': adminPassword,
+        },
         body: JSON.stringify(editState),
       });
     } catch { /* ignore */ }
@@ -229,6 +265,40 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
+      {/* ═══════════════ ADMIN PASSWORD MODAL ═══════════════ */}
+      {showPasswordPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h2 className="text-lg font-bold text-[#1a4731] mb-1">Admin Login</h2>
+            <p className="text-sm text-[#1a4731]/60 mb-4">Enter the admin password to edit the leaderboard.</p>
+            <input
+              type="password"
+              autoFocus
+              value={adminPassword}
+              onChange={e => { setAdminPassword(e.target.value); setPasswordError(''); }}
+              onKeyDown={e => { if (e.key === 'Enter') handlePasswordSubmit(); }}
+              placeholder="Password"
+              className="w-full px-4 py-2 border border-[#1a4731]/20 rounded-lg text-[#1a4731] focus:outline-none focus:ring-2 focus:ring-[#c9a84c]/60 mb-2"
+            />
+            {passwordError && <p className="text-red-600 text-sm mb-2">{passwordError}</p>}
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => { setShowPasswordPrompt(false); setAdminPassword(''); setPasswordError(''); }}
+                className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg border border-[#1a4731]/20 text-[#1a4731]/60 hover:text-[#1a4731] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePasswordSubmit}
+                className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg bg-[#1a4731] text-[#c9a84c] hover:bg-[#1a4731]/90 transition-colors"
+              >
+                Login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══════════════ HEADER ═══════════════ */}
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>

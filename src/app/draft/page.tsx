@@ -24,11 +24,14 @@ async function loadStateFromAPI(): Promise<DraftState | null> {
   return null;
 }
 
-async function saveStateToAPI(state: DraftState) {
+async function saveStateToAPI(state: DraftState, password: string) {
   try {
     await fetch('/api/draft', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': password,
+      },
       body: JSON.stringify(state),
     });
   } catch { /* ignore */ }
@@ -388,8 +391,13 @@ export default function DraftPage() {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   const isLocalChange = useRef(false);
+  const adminPasswordRef = useRef('');
 
   // ── Hydrate from server ──
   useEffect(() => {
@@ -402,7 +410,7 @@ export default function DraftPage() {
   // ── Persist to server on changes ──
   useEffect(() => {
     if (hydrated && isLocalChange.current) {
-      saveStateToAPI(draft);
+      saveStateToAPI(draft, adminPasswordRef.current);
       isLocalChange.current = false;
     }
   }, [draft, hydrated]);
@@ -531,6 +539,30 @@ export default function DraftPage() {
     setShowResetConfirm(false);
   }, []);
 
+  const handleAdminLogin = useCallback(async () => {
+    try {
+      const res = await fetch('/api/draft', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': adminPassword,
+        },
+        body: JSON.stringify(draft),
+      });
+      if (res.status === 401) {
+        setPasswordError('Incorrect password');
+        return;
+      }
+    } catch {
+      setPasswordError('Could not verify — try again');
+      return;
+    }
+    adminPasswordRef.current = adminPassword;
+    setIsAdmin(true);
+    setShowPasswordPrompt(false);
+    setPasswordError('');
+  }, [adminPassword, draft]);
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -549,8 +581,58 @@ export default function DraftPage() {
     );
   }
 
+  // ── Password modal (shared across phases) ──
+  const passwordModal = showPasswordPrompt && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+        <h2 className="text-lg font-bold text-[#1a4731] mb-1">Admin Login</h2>
+        <p className="text-sm text-[#1a4731]/60 mb-4">Enter the admin password to manage the draft.</p>
+        <input
+          type="password"
+          autoFocus
+          value={adminPassword}
+          onChange={e => { setAdminPassword(e.target.value); setPasswordError(''); }}
+          onKeyDown={e => { if (e.key === 'Enter') handleAdminLogin(); }}
+          placeholder="Password"
+          className="w-full px-4 py-2 border border-[#1a4731]/20 rounded-lg text-[#1a4731] focus:outline-none focus:ring-2 focus:ring-[#c9a84c]/60 mb-2"
+        />
+        {passwordError && <p className="text-red-600 text-sm mb-2">{passwordError}</p>}
+        <div className="flex gap-2 mt-3">
+          <button
+            onClick={() => { setShowPasswordPrompt(false); setAdminPassword(''); setPasswordError(''); }}
+            className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg border border-[#1a4731]/20 text-[#1a4731]/60 hover:text-[#1a4731] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAdminLogin}
+            className="flex-1 px-4 py-2 text-sm font-semibold rounded-lg bg-[#1a4731] text-[#c9a84c] hover:bg-[#1a4731]/90 transition-colors"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // ── Phase 1: Coin Flip ──
   if (!draft.coinFlipDone) {
+    if (!isAdmin) {
+      return (
+        <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+          {passwordModal}
+          <div className="text-[#c9a84c] font-semibold uppercase tracking-widest text-xs mb-3">RGAO · Ryder Cup</div>
+          <h1 className="text-3xl font-bold text-[#1a4731] mb-3">Draft Dashboard</h1>
+          <p className="text-[#1a4731]/60 text-sm mb-6">The draft hasn&apos;t started yet. Admin login required to begin.</p>
+          <button
+            onClick={() => setShowPasswordPrompt(true)}
+            className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-[#1a4731] text-[#c9a84c] hover:bg-[#1a4731]/90 transition-colors"
+          >
+            Admin Login
+          </button>
+        </div>
+      );
+    }
     return <CoinFlipScreen onSelect={handleCoinFlip} />;
   }
 
@@ -571,6 +653,7 @@ export default function DraftPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {passwordModal}
       {/* ── Page Header ── */}
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -584,37 +667,48 @@ export default function DraftPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {draft.log.length > 0 && (
-            <button
-              onClick={handleUndo}
-              className="flex items-center gap-1.5 text-sm font-semibold text-[#1a4731]/65 hover:text-[#1a4731] border border-[#1a4731]/20 hover:border-[#1a4731]/40 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              ↩ Undo
-            </button>
-          )}
-          {showResetConfirm ? (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
-              <span className="text-sm text-red-700 font-medium">Reset all?</span>
-              <button
-                onClick={handleReset}
-                className="text-sm font-bold text-red-700 hover:text-red-900"
-              >
-                Yes
-              </button>
-              <span className="text-red-300">·</span>
-              <button
-                onClick={() => setShowResetConfirm(false)}
-                className="text-sm text-red-400 hover:text-red-600"
-              >
-                No
-              </button>
-            </div>
+          {isAdmin ? (
+            <>
+              {draft.log.length > 0 && (
+                <button
+                  onClick={handleUndo}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-[#1a4731]/65 hover:text-[#1a4731] border border-[#1a4731]/20 hover:border-[#1a4731]/40 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  ↩ Undo
+                </button>
+              )}
+              {showResetConfirm ? (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
+                  <span className="text-sm text-red-700 font-medium">Reset all?</span>
+                  <button
+                    onClick={handleReset}
+                    className="text-sm font-bold text-red-700 hover:text-red-900"
+                  >
+                    Yes
+                  </button>
+                  <span className="text-red-300">·</span>
+                  <button
+                    onClick={() => setShowResetConfirm(false)}
+                    className="text-sm text-red-400 hover:text-red-600"
+                  >
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowResetConfirm(true)}
+                  className="text-sm font-semibold text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Reset Draft
+                </button>
+              )}
+            </>
           ) : (
             <button
-              onClick={() => setShowResetConfirm(true)}
-              className="text-sm font-semibold text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors"
+              onClick={() => setShowPasswordPrompt(true)}
+              className="px-4 py-2 text-sm font-semibold rounded-lg border border-[#c9a84c]/40 text-[#1a4731] hover:bg-[#c9a84c]/10 transition-colors"
             >
-              Reset Draft
+              Admin Login
             </button>
           )}
         </div>
@@ -783,8 +877,8 @@ export default function DraftPage() {
                   return (
                     <button
                       key={player.id}
-                      onClick={() => setSelectedPlayer(isSelected ? null : player)}
-                      disabled={isDraftComplete}
+                      onClick={() => isAdmin && setSelectedPlayer(isSelected ? null : player)}
+                      disabled={isDraftComplete || !isAdmin}
                       className={`w-full px-4 py-2.5 text-left transition-colors border-l-4 flex items-center justify-between gap-2 ${
                         isSelected
                           ? 'bg-[#c9a84c]/10 border-l-[#c9a84c]'
