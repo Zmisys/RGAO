@@ -1,11 +1,12 @@
 import Link from 'next/link';
 
 const pastTournaments = [
-  { year: 2021, location: 'Palm Springs, CA', logo: '/logos/rgao-2021.png' },
-  { year: 2022, location: 'Pinehurst, NC', logo: '/logos/rgao-2022.png' },
-  { year: 2023, location: 'Scottsdale, AZ', logo: '/logos/rgao-2023.png' },
-  { year: 2024, location: 'San Diego, CA', logo: '/logos/rgao-2024.png' },
-  { year: 2025, location: 'Charleston, SC', logo: '/logos/rgao-2025.png' },
+  { year: 2021, location: 'Palm Springs, CA' },
+  { year: 2022, location: 'Pinehurst, NC' },
+  { year: 2023, location: 'Scottsdale, AZ' },
+  { year: 2024, location: 'San Diego, CA' },
+  { year: 2025, location: 'Charleston, SC' },
+  { year: 2026, location: 'Cabo San Lucas, MX', current: true },
 ];
 
 const courses = [
@@ -126,21 +127,22 @@ export default function HomePage() {
             </span>
           </div>
 
-          {/* Logo */}
-          <div className="flex justify-center mb-10">
-            <img
-              src="/logos/rgao-2026.png"
-              alt="RGAO 2026 — 6th Annual — Cabo San Lucas, Mexico"
-              className="w-44 h-auto md:w-56 object-contain hero-logo-glow"
-            />
+          {/* Typographic hero — no image needed */}
+          <div className="mb-4">
+            <span className="text-[#c9a84c]/30 text-lg md:text-xl font-bold uppercase tracking-[0.3em]">
+              The 6th Annual
+            </span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-[#f5f0e8] mb-3 tracking-tight">
-            RGAO <span className="text-[#c9a84c]">2026</span>
+          <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-[#f5f0e8] mb-4 tracking-tight leading-none">
+            RGAO
           </h1>
+          <div className="text-5xl md:text-7xl lg:text-8xl font-black text-[#c9a84c] mb-6 tracking-tight leading-none">
+            2026
+          </div>
 
-          <p className="text-lg md:text-xl text-[#f5f0e8]/60 font-light mb-2 tracking-wide uppercase">
-            6th Annual &middot; Republican Golf Association Open
+          <p className="text-lg md:text-xl text-[#f5f0e8]/50 font-light mb-2 tracking-wide uppercase">
+            Republican Golf Association Open
           </p>
           <p className="text-[#c9a84c] text-lg md:text-2xl italic font-medium mb-12">
             &ldquo;Where the Desert Meets the Sea&rdquo;
@@ -170,9 +172,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== DESTINATION QUICK STATS ===== */}
+      {/* ===== DESTINATION ===== */}
       <section className="relative bg-white py-20 overflow-hidden">
-        {/* Decorative gold accent line */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#c9a84c] to-transparent" />
 
         <div className="max-w-6xl mx-auto px-4">
@@ -191,7 +192,6 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { value: '4', label: 'Championship Rounds', sub: 'Three days of world-class golf' },
@@ -242,7 +242,6 @@ export default function HomePage() {
                 }`}
               >
                 <div className="flex flex-col md:flex-row md:items-center">
-                  {/* Round badge */}
                   <div
                     className={`flex items-center justify-center md:w-24 py-3 md:py-0 md:min-h-[100px] font-black text-2xl shrink-0 ${
                       c.round === 4
@@ -253,11 +252,10 @@ export default function HomePage() {
                     R{c.round}
                   </div>
 
-                  {/* Course details */}
                   <div className="flex-1 p-5 md:p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                       <div>
-                        <h3 className="text-xl font-bold text-[#1a4731] group-hover:text-[#1a4731] transition-colors">
+                        <h3 className="text-xl font-bold text-[#1a4731]">
                           {c.name}
                           {c.round === 4 && (
                             <span className="ml-2 text-xs bg-[#c9a84c] text-[#1a4731] px-2 py-0.5 rounded-full font-bold uppercase">
@@ -287,7 +285,6 @@ export default function HomePage() {
 
       {/* ===== CAPTAINS ===== */}
       <section className="relative py-20 bg-white overflow-hidden">
-        {/* Decorative background */}
         <div
           className="absolute inset-0 opacity-[0.02]"
           style={{
@@ -310,7 +307,6 @@ export default function HomePage() {
           </p>
 
           <div className="grid sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
-            {/* Captain: Cole Dominguez */}
             <div className="relative rounded-2xl border-2 border-[#c9a84c]/20 p-8 bg-gradient-to-b from-[#f5f0e8] to-white hover:border-[#c9a84c] transition-all hover:shadow-lg hover:shadow-[#c9a84c]/10 group">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#c9a84c] text-[#1a4731] text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full">
                 Captain
@@ -323,7 +319,6 @@ export default function HomePage() {
               <div className="text-[#1a4731]/50 text-sm mt-2">2 Handicap</div>
             </div>
 
-            {/* Captain: Ryan Parker */}
             <div className="relative rounded-2xl border-2 border-[#c9a84c]/20 p-8 bg-gradient-to-b from-[#f5f0e8] to-white hover:border-[#c9a84c] transition-all hover:shadow-lg hover:shadow-[#c9a84c]/10 group">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#c9a84c] text-[#1a4731] text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full">
                 Captain
@@ -351,7 +346,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== TOURNAMENT HUB / FEATURES ===== */}
+      {/* ===== TOURNAMENT HUB ===== */}
       <section className="py-20 bg-[#f5f0e8]">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-14">
@@ -401,43 +396,34 @@ export default function HomePage() {
             <h2 className="text-4xl md:text-5xl font-black text-[#f5f0e8] mb-5">
               Six Years of RGAO
             </h2>
-            <p className="text-[#f5f0e8]/50 max-w-2xl mx-auto">
+            <p className="text-[#f5f0e8]/50 max-w-2xl mx-auto mb-14">
               From Palm Springs to Cabo San Lucas — every year, a new destination.
               Every year, a new champion. The tradition continues.
             </p>
           </div>
 
-          {/* Past tournament logos */}
-          <div className="flex justify-center gap-4 md:gap-8 flex-wrap mb-14">
+          {/* Year timeline — clean text-only */}
+          <div className="flex justify-center gap-3 md:gap-5 flex-wrap mb-14">
             {pastTournaments.map((t) => (
-              <div key={t.year} className="flex flex-col items-center group">
-                <div className="w-16 h-20 md:w-20 md:h-28 mb-3 opacity-50 group-hover:opacity-100 transition-all group-hover:scale-110">
-                  <img
-                    src={t.logo}
-                    alt={`RGAO ${t.year}`}
-                    className="w-full h-full object-contain"
-                  />
+              <div
+                key={t.year}
+                className={`text-center px-4 md:px-6 py-4 rounded-xl border transition-all ${
+                  t.current
+                    ? 'border-[#c9a84c] bg-[#c9a84c]/10'
+                    : 'border-[#c9a84c]/15 hover:border-[#c9a84c]/40'
+                }`}
+              >
+                <div className={`text-2xl md:text-3xl font-black mb-1 ${t.current ? 'text-[#c9a84c]' : 'text-[#f5f0e8]/70'}`}>
+                  {t.year}
                 </div>
-                <div className="text-[#c9a84c] font-bold text-sm">{t.year}</div>
-                <div className="text-[#f5f0e8]/40 text-xs">{t.location}</div>
+                <div className={`text-xs ${t.current ? 'text-[#c9a84c]/80 font-semibold' : 'text-[#f5f0e8]/35'}`}>
+                  {t.location}
+                </div>
               </div>
             ))}
-
-            {/* 2026 — featured */}
-            <div className="flex flex-col items-center">
-              <div className="w-20 h-28 md:w-24 md:h-32 mb-3 ring-2 ring-[#c9a84c]/40 rounded-xl p-1.5 bg-[#c9a84c]/5">
-                <img
-                  src="/logos/rgao-2026.png"
-                  alt="RGAO 2026 — Cabo San Lucas"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <div className="text-[#c9a84c] font-black text-sm">2026</div>
-              <div className="text-[#c9a84c]/70 text-xs font-semibold">Cabo San Lucas</div>
-            </div>
           </div>
 
-          {/* History stats */}
+          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
             {[
               { value: '6', label: 'Tournaments' },
@@ -479,7 +465,6 @@ export default function HomePage() {
             backgroundSize: '16px 16px',
           }}
         />
-        {/* Warm glow */}
         <div
           className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full opacity-10"
           style={{
@@ -488,13 +473,7 @@ export default function HomePage() {
         />
 
         <div className="relative max-w-3xl mx-auto">
-          <div className="flex justify-center mb-8">
-            <img
-              src="/logos/rgao-2026.png"
-              alt="RGAO 2026"
-              className="w-24 h-auto object-contain opacity-90"
-            />
-          </div>
+          <div className="text-[#c9a84c] text-5xl md:text-6xl font-black mb-2 tracking-tight">RGAO</div>
           <h2 className="text-4xl md:text-6xl font-black text-[#f5f0e8] mb-4">
             See You in <span className="text-[#c9a84c]">Cabo</span>
           </h2>
