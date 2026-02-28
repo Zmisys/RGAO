@@ -1,18 +1,18 @@
 import Link from 'next/link';
-import { logo2021, logo2022, logo2023, logo2024, logo2025, logo2026 } from '@/data/logos';
 
 const pastTournaments = [
-  { year: 2021, location: 'Palm Springs, CA', logo: logo2021 },
-  { year: 2022, location: 'Pinehurst, NC', logo: logo2022 },
-  { year: 2023, location: 'Scottsdale, AZ', logo: logo2023 },
-  { year: 2024, location: 'San Diego, CA', logo: logo2024 },
-  { year: 2025, location: 'Charleston, SC', logo: logo2025 },
+  { year: 2021, location: 'Palm Springs, CA', logo: '/logos/rgao-2021.png' },
+  { year: 2022, location: 'Pinehurst, NC', logo: '/logos/rgao-2022.png' },
+  { year: 2023, location: 'Scottsdale, AZ', logo: '/logos/rgao-2023.png' },
+  { year: 2024, location: 'San Diego, CA', logo: '/logos/rgao-2024.png' },
+  { year: 2025, location: 'Charleston, SC', logo: '/logos/rgao-2025.png' },
 ];
 
 const courses = [
   {
     round: 1,
     name: 'El Cardonal',
+    designer: 'Tiger Woods Design',
     format: '2v2 Cart Score (net)',
     day: 'Thursday',
     time: '1:00 PM',
@@ -22,6 +22,7 @@ const courses = [
   {
     round: 2,
     name: 'The Oasis Short Course',
+    designer: '',
     format: '2v2 Scramble',
     day: 'Friday',
     time: '9:00 AM',
@@ -31,6 +32,7 @@ const courses = [
   {
     round: 3,
     name: 'The Dunes Course',
+    designer: '',
     format: '2v2 Best Ball (net)',
     day: 'Friday',
     time: '1:00 PM',
@@ -40,6 +42,7 @@ const courses = [
   {
     round: 4,
     name: 'Solmar Golf Links',
+    designer: '',
     format: '1v1 Singles Match Play (net)',
     day: 'Saturday',
     time: '8:10 AM',
@@ -48,24 +51,65 @@ const courses = [
   },
 ];
 
+const features = [
+  {
+    title: 'Live Leaderboard',
+    desc: 'Real-time scoring and team standings updated throughout each round',
+    href: '/dashboard',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 13h2v8H3zm6-4h2v12H9zm6-6h2v18h-2zm6 10h2v8h-2z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Draft Board',
+    desc: 'Interactive team draft with coin flip, pick timer, and live selections',
+    href: '/draft',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Tournament Blog',
+    desc: 'Previews, course breakdowns, player profiles, and post-round recaps',
+    href: '/blog',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'All-Time Records',
+    desc: 'Champions, lowest rounds, and historic moments from every RGAO',
+    href: '/records',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+      </svg>
+    ),
+  },
+];
+
 export default function HomePage() {
   return (
     <div>
-      {/* ===== HERO — CABO 2026 ===== */}
+      {/* ===== HERO ===== */}
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden bg-[#1a4731]">
-        {/* Layered background — sun glow + ocean gradient */}
+        {/* Layered backgrounds */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0f2d1f] via-[#1a4731] to-[#1a4731]" />
-          {/* Sun glow */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f2d1f] via-[#1a4731] to-[#0f2d1f]" />
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full opacity-20"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full opacity-15"
             style={{
-              background: 'radial-gradient(ellipse at center, #c9a84c 0%, transparent 70%)',
+              background: 'radial-gradient(ellipse at center, #c9a84c 0%, transparent 60%)',
             }}
           />
-          {/* Subtle pattern overlay */}
           <div
-            className="absolute inset-0 opacity-[0.04]"
+            className="absolute inset-0 opacity-[0.03]"
             style={{
               backgroundImage:
                 'repeating-linear-gradient(45deg, #c9a84c 0, #c9a84c 1px, transparent 0, transparent 50%)',
@@ -75,19 +119,19 @@ export default function HomePage() {
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
-          {/* Location tag */}
-          <div className="inline-flex items-center gap-2 border border-[#c9a84c]/30 bg-[#c9a84c]/10 backdrop-blur-sm px-5 py-2 rounded-full mb-8">
+          {/* Location pill */}
+          <div className="inline-flex items-center gap-2 border border-[#c9a84c]/30 bg-[#c9a84c]/10 backdrop-blur-sm px-5 py-2 rounded-full mb-10">
             <span className="text-[#c9a84c] text-sm font-bold uppercase tracking-[0.2em]">
               Cabo San Lucas, Mexico
             </span>
           </div>
 
-          {/* Main 2026 logo */}
-          <div className="flex justify-center mb-8">
+          {/* Logo */}
+          <div className="flex justify-center mb-10">
             <img
-              src={logo2026}
+              src="/logos/rgao-2026.png"
               alt="RGAO 2026 — 6th Annual — Cabo San Lucas, Mexico"
-              className="w-48 h-60 md:w-64 md:h-80 object-contain drop-shadow-2xl hero-logo-glow"
+              className="w-44 h-auto md:w-56 object-contain hero-logo-glow"
             />
           </div>
 
@@ -98,26 +142,26 @@ export default function HomePage() {
           <p className="text-lg md:text-xl text-[#f5f0e8]/60 font-light mb-2 tracking-wide uppercase">
             6th Annual &middot; Republican Golf Association Open
           </p>
-          <p className="text-[#c9a84c] text-lg md:text-2xl italic font-medium mb-10">
+          <p className="text-[#c9a84c] text-lg md:text-2xl italic font-medium mb-12">
             &ldquo;Where the Desert Meets the Sea&rdquo;
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/dashboard"
-              className="bg-[#c9a84c] text-[#1a4731] px-10 py-4 rounded-lg font-bold text-lg hover:bg-[#b8943a] transition-all shadow-lg shadow-[#c9a84c]/20 hover:shadow-[#c9a84c]/40"
+              className="bg-[#c9a84c] text-[#1a4731] px-10 py-4 rounded-lg font-bold text-lg hover:bg-[#b8943a] transition-all shadow-lg shadow-[#c9a84c]/20 hover:shadow-[#c9a84c]/40 hover:-translate-y-0.5"
             >
               View Leaderboard
             </Link>
             <Link
               href="/draft"
-              className="border-2 border-[#c9a84c]/60 text-[#c9a84c] px-10 py-4 rounded-lg font-bold text-lg hover:bg-[#c9a84c] hover:text-[#1a4731] transition-all"
+              className="border-2 border-[#c9a84c]/60 text-[#c9a84c] px-10 py-4 rounded-lg font-bold text-lg hover:bg-[#c9a84c] hover:text-[#1a4731] transition-all hover:-translate-y-0.5"
             >
               Join the Draft
             </Link>
           </div>
 
-          {/* Scroll hint */}
+          {/* Scroll indicator */}
           <div className="mt-16 animate-bounce text-[#c9a84c]/40">
             <svg className="w-6 h-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -126,29 +170,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== DESTINATION BANNER ===== */}
-      <section className="bg-[#c9a84c] py-5">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-wrap justify-center gap-x-10 gap-y-2 text-[#1a4731] font-bold text-sm tracking-wide">
-            <span>CABO SAN LUCAS</span>
-            <span className="text-[#1a4731]/40 hidden sm:inline">&bull;</span>
-            <span>BAJA CALIFORNIA SUR</span>
-            <span className="text-[#1a4731]/40 hidden sm:inline">&bull;</span>
-            <span>MEXICO</span>
-            <span className="text-[#1a4731]/40 hidden sm:inline">&bull;</span>
-            <span>2026</span>
-          </div>
-        </div>
-      </section>
+      {/* ===== DESTINATION QUICK STATS ===== */}
+      <section className="relative bg-white py-20 overflow-hidden">
+        {/* Decorative gold accent line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#c9a84c] to-transparent" />
 
-      {/* ===== THE DESTINATION ===== */}
-      <section className="py-20 bg-white">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center mb-14">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-16">
             <div className="text-[#c9a84c] font-semibold uppercase tracking-[0.2em] text-sm mb-3">
               The Destination
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-[#1a4731] mb-5">
+            <h2 className="text-4xl md:text-5xl font-black text-[#1a4731] mb-6">
               Cabo San Lucas
             </h2>
             <p className="text-[#1a4731]/70 max-w-3xl mx-auto text-lg leading-relaxed">
@@ -159,28 +191,26 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gradient-to-br from-[#1a4731] to-[#0f2d1f] rounded-2xl p-8 text-center">
-              <div className="text-4xl font-black text-[#c9a84c] mb-1">4</div>
-              <div className="text-[#f5f0e8] font-bold mb-2">Championship Rounds</div>
-              <div className="text-[#f5f0e8]/50 text-sm">
-                Three days of competition across four distinct courses in the Cabo corridor
+          {/* Stats row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { value: '4', label: 'Championship Rounds', sub: 'Three days of world-class golf' },
+              { value: '16', label: 'Competitors', sub: 'Ryder Cup-style showdown' },
+              { value: '20', label: 'Points at Stake', sub: 'First to 10.5 wins' },
+              { value: '1st', label: 'International Year', sub: 'RGAO goes to Mexico' },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="relative group bg-gradient-to-br from-[#1a4731] to-[#0f2d1f] rounded-2xl p-6 text-center overflow-hidden hover:scale-[1.02] transition-transform"
+              >
+                <div className="absolute inset-0 bg-[#c9a84c]/0 group-hover:bg-[#c9a84c]/5 transition-colors" />
+                <div className="relative">
+                  <div className="text-4xl md:text-5xl font-black text-[#c9a84c] mb-2">{stat.value}</div>
+                  <div className="text-[#f5f0e8] font-bold text-sm mb-1">{stat.label}</div>
+                  <div className="text-[#f5f0e8]/40 text-xs">{stat.sub}</div>
+                </div>
               </div>
-            </div>
-            <div className="bg-gradient-to-br from-[#1a4731] to-[#0f2d1f] rounded-2xl p-8 text-center">
-              <div className="text-4xl font-black text-[#c9a84c] mb-1">16</div>
-              <div className="text-[#f5f0e8] font-bold mb-2">Competitors</div>
-              <div className="text-[#f5f0e8]/50 text-sm">
-                Two captains. Two teams. One Ryder Cup-style showdown under the Mexican sun
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-[#1a4731] to-[#0f2d1f] rounded-2xl p-8 text-center">
-              <div className="text-4xl font-black text-[#c9a84c] mb-1">20</div>
-              <div className="text-[#f5f0e8] font-bold mb-2">Points at Stake</div>
-              <div className="text-[#f5f0e8]/50 text-sm">
-                First to 10.5 wins. Every match, every hole, every shot matters
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -205,16 +235,16 @@ export default function HomePage() {
             {courses.map((c) => (
               <div
                 key={c.round}
-                className={`bg-white rounded-xl border overflow-hidden transition-all hover:shadow-lg ${
+                className={`bg-white rounded-xl border overflow-hidden transition-all hover:shadow-lg group ${
                   c.round === 4
                     ? 'border-[#c9a84c] shadow-md shadow-[#c9a84c]/10'
-                    : 'border-[#c9a84c]/20'
+                    : 'border-[#1a4731]/10 hover:border-[#c9a84c]/40'
                 }`}
               >
                 <div className="flex flex-col md:flex-row md:items-center">
-                  {/* Round number */}
+                  {/* Round badge */}
                   <div
-                    className={`flex items-center justify-center md:w-24 py-3 md:py-0 md:min-h-[100px] font-black text-2xl ${
+                    className={`flex items-center justify-center md:w-24 py-3 md:py-0 md:min-h-[100px] font-black text-2xl shrink-0 ${
                       c.round === 4
                         ? 'bg-[#c9a84c] text-[#1a4731]'
                         : 'bg-[#1a4731] text-[#c9a84c]'
@@ -223,11 +253,11 @@ export default function HomePage() {
                     R{c.round}
                   </div>
 
-                  {/* Course info */}
+                  {/* Course details */}
                   <div className="flex-1 p-5 md:p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                       <div>
-                        <h3 className="text-xl font-bold text-[#1a4731]">
+                        <h3 className="text-xl font-bold text-[#1a4731] group-hover:text-[#1a4731] transition-colors">
                           {c.name}
                           {c.round === 4 && (
                             <span className="ml-2 text-xs bg-[#c9a84c] text-[#1a4731] px-2 py-0.5 rounded-full font-bold uppercase">
@@ -236,6 +266,9 @@ export default function HomePage() {
                           )}
                         </h3>
                         <p className="text-[#1a4731]/60 text-sm mt-1">{c.format}</p>
+                        {c.designer && (
+                          <p className="text-[#c9a84c]/80 text-xs mt-0.5 italic">{c.designer}</p>
+                        )}
                       </div>
                       <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-[#1a4731]/70">
                         <span className="font-semibold">{c.day}</span>
@@ -253,8 +286,18 @@ export default function HomePage() {
       </section>
 
       {/* ===== CAPTAINS ===== */}
-      <section className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
+      <section className="relative py-20 bg-white overflow-hidden">
+        {/* Decorative background */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(-45deg, #1a4731 0, #1a4731 1px, transparent 0, transparent 50%)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+
+        <div className="relative max-w-4xl mx-auto px-4 text-center">
           <div className="text-[#c9a84c] font-semibold uppercase tracking-[0.2em] text-sm mb-3">
             The Captains
           </div>
@@ -267,16 +310,25 @@ export default function HomePage() {
           </p>
 
           <div className="grid sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
-            <div className="rounded-2xl border-2 border-[#c9a84c]/30 p-8 bg-[#f5f0e8] hover:border-[#c9a84c] transition-colors">
-              <div className="w-20 h-20 rounded-full bg-[#1a4731] flex items-center justify-center mx-auto mb-4">
+            {/* Captain: Cole Dominguez */}
+            <div className="relative rounded-2xl border-2 border-[#c9a84c]/20 p-8 bg-gradient-to-b from-[#f5f0e8] to-white hover:border-[#c9a84c] transition-all hover:shadow-lg hover:shadow-[#c9a84c]/10 group">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#c9a84c] text-[#1a4731] text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full">
+                Captain
+              </div>
+              <div className="w-20 h-20 rounded-full bg-[#1a4731] flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
                 <span className="text-[#c9a84c] text-2xl font-black">CD</span>
               </div>
               <div className="text-xl font-bold text-[#1a4731]">Cole Dominguez</div>
               <div className="text-[#c9a84c] font-semibold text-sm mt-1">Team DOM</div>
               <div className="text-[#1a4731]/50 text-sm mt-2">2 Handicap</div>
             </div>
-            <div className="rounded-2xl border-2 border-[#c9a84c]/30 p-8 bg-[#f5f0e8] hover:border-[#c9a84c] transition-colors">
-              <div className="w-20 h-20 rounded-full bg-[#1a4731] flex items-center justify-center mx-auto mb-4">
+
+            {/* Captain: Ryan Parker */}
+            <div className="relative rounded-2xl border-2 border-[#c9a84c]/20 p-8 bg-gradient-to-b from-[#f5f0e8] to-white hover:border-[#c9a84c] transition-all hover:shadow-lg hover:shadow-[#c9a84c]/10 group">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#c9a84c] text-[#1a4731] text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full">
+                Captain
+              </div>
+              <div className="w-20 h-20 rounded-full bg-[#1a4731] flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
                 <span className="text-[#c9a84c] text-2xl font-black">RP</span>
               </div>
               <div className="text-xl font-bold text-[#1a4731]">Ryan Parker</div>
@@ -288,10 +340,10 @@ export default function HomePage() {
           <div className="mt-10">
             <Link
               href="/draft"
-              className="inline-flex items-center gap-2 text-[#c9a84c] font-bold hover:text-[#1a4731] transition-colors text-lg"
+              className="inline-flex items-center gap-2 text-[#c9a84c] font-bold hover:text-[#1a4731] transition-colors text-lg group"
             >
               View the Draft Board
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
@@ -299,7 +351,47 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== LEGACY — Est. 2021 ===== */}
+      {/* ===== TOURNAMENT HUB / FEATURES ===== */}
+      <section className="py-20 bg-[#f5f0e8]">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="text-center mb-14">
+            <div className="text-[#c9a84c] font-semibold uppercase tracking-[0.2em] text-sm mb-3">
+              Tournament Hub
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-[#1a4731] mb-5">
+              Everything You Need
+            </h2>
+            <p className="text-[#1a4731]/60 max-w-2xl mx-auto">
+              Follow every match, track every point, and relive every moment
+              of the 2026 RGAO in Cabo San Lucas.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-5">
+            {features.map((item) => (
+              <Link
+                key={item.title}
+                href={item.href}
+                className="bg-white rounded-2xl p-6 border border-[#1a4731]/8 hover:border-[#c9a84c] hover:shadow-lg hover:shadow-[#c9a84c]/5 transition-all group hover:-translate-y-1"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#1a4731] flex items-center justify-center text-[#c9a84c] shrink-0 group-hover:bg-[#c9a84c] group-hover:text-[#1a4731] transition-colors">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <div className="font-bold text-[#1a4731] text-lg mb-1 group-hover:text-[#c9a84c] transition-colors">
+                      {item.title}
+                    </div>
+                    <div className="text-[#1a4731]/55 text-sm leading-relaxed">{item.desc}</div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== LEGACY / HISTORY ===== */}
       <section className="py-20 bg-[#1a4731] overflow-hidden">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-14">
@@ -315,11 +407,11 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Past tournament logos in a row */}
-          <div className="flex justify-center gap-6 md:gap-10 flex-wrap mb-12">
+          {/* Past tournament logos */}
+          <div className="flex justify-center gap-4 md:gap-8 flex-wrap mb-14">
             {pastTournaments.map((t) => (
               <div key={t.year} className="flex flex-col items-center group">
-                <div className="w-16 h-20 md:w-20 md:h-28 mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
+                <div className="w-16 h-20 md:w-20 md:h-28 mb-3 opacity-50 group-hover:opacity-100 transition-all group-hover:scale-110">
                   <img
                     src={t.logo}
                     alt={`RGAO ${t.year}`}
@@ -333,9 +425,9 @@ export default function HomePage() {
 
             {/* 2026 — featured */}
             <div className="flex flex-col items-center">
-              <div className="w-20 h-28 md:w-24 md:h-32 mb-3 ring-2 ring-[#c9a84c]/30 rounded-xl p-1">
+              <div className="w-20 h-28 md:w-24 md:h-32 mb-3 ring-2 ring-[#c9a84c]/40 rounded-xl p-1.5 bg-[#c9a84c]/5">
                 <img
-                  src={logo2026}
+                  src="/logos/rgao-2026.png"
                   alt="RGAO 2026 — Cabo San Lucas"
                   className="w-full h-full object-contain"
                 />
@@ -345,7 +437,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Quick stats row */}
+          {/* History stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
             {[
               { value: '6', label: 'Tournaments' },
@@ -362,108 +454,63 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ===== FEATURES ===== */}
-      <section className="py-20 bg-[#f5f0e8]">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="text-[#c9a84c] font-semibold uppercase tracking-[0.2em] text-sm mb-3">
-                Tournament Hub
-              </div>
-              <h2 className="text-4xl font-black text-[#1a4731] mb-5">
-                Everything You Need
-              </h2>
-              <p className="text-[#1a4731]/70 mb-6 leading-relaxed text-lg">
-                Follow every match, track every point, and relive every moment of the
-                2026 RGAO in Cabo San Lucas. Our tournament hub keeps you connected
-                to the action.
-              </p>
-              <Link
-                href="/records"
-                className="inline-flex items-center gap-2 text-[#c9a84c] font-bold hover:text-[#1a4731] transition-colors"
-              >
-                View Historic Records
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                {
-                  title: 'Live Leaderboard',
-                  desc: 'Real-time scoring and team standings updated throughout each round',
-                  href: '/dashboard',
-                },
-                {
-                  title: 'Draft Board',
-                  desc: 'Interactive team draft with coin flip, pick timer, and live selections',
-                  href: '/draft',
-                },
-                {
-                  title: 'Tournament Blog',
-                  desc: 'Previews, course breakdowns, player profiles, and post-round recaps',
-                  href: '/blog',
-                },
-                {
-                  title: 'All-Time Records',
-                  desc: 'Champions, lowest rounds, and historic moments from every RGAO',
-                  href: '/records',
-                },
-              ].map((item) => (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  className="bg-white rounded-xl p-5 border border-[#c9a84c]/20 shadow-sm hover:border-[#c9a84c] hover:shadow-md transition-all group"
-                >
-                  <div className="font-bold text-[#1a4731] text-sm mb-2 group-hover:text-[#c9a84c] transition-colors">
-                    {item.title}
-                  </div>
-                  <div className="text-[#1a4731]/60 text-xs leading-relaxed">{item.desc}</div>
-                </Link>
-              ))}
-            </div>
+          <div className="text-center mt-10">
+            <Link
+              href="/records"
+              className="inline-flex items-center gap-2 text-[#c9a84c] font-bold hover:text-[#f5f0e8] transition-colors text-lg group"
+            >
+              View All-Time Records
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ===== FINAL CTA ===== */}
-      <section className="relative py-20 px-4 text-center overflow-hidden bg-[#1a4731]">
+      <section className="relative py-24 px-4 text-center overflow-hidden bg-gradient-to-b from-[#0f2d1f] to-[#1a4731]">
         <div
-          className="absolute inset-0 opacity-[0.06]"
+          className="absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage:
               'repeating-linear-gradient(-45deg, #c9a84c 0, #c9a84c 1px, transparent 0, transparent 50%)',
             backgroundSize: '16px 16px',
           }}
         />
+        {/* Warm glow */}
+        <div
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full opacity-10"
+          style={{
+            background: 'radial-gradient(ellipse at center, #c9a84c 0%, transparent 70%)',
+          }}
+        />
+
         <div className="relative max-w-3xl mx-auto">
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-8">
             <img
-              src={logo2026}
+              src="/logos/rgao-2026.png"
               alt="RGAO 2026"
-              className="w-20 h-28 object-contain opacity-80"
+              className="w-24 h-auto object-contain opacity-90"
             />
           </div>
-          <h2 className="text-4xl md:text-5xl font-black text-[#f5f0e8] mb-4">
+          <h2 className="text-4xl md:text-6xl font-black text-[#f5f0e8] mb-4">
             See You in <span className="text-[#c9a84c]">Cabo</span>
           </h2>
-          <p className="text-[#f5f0e8]/60 mb-10 text-lg">
+          <p className="text-[#f5f0e8]/50 mb-12 text-lg max-w-xl mx-auto">
             The 6th Annual RGAO awaits. Cabo San Lucas, Mexico.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/dashboard"
-              className="bg-[#c9a84c] text-[#1a4731] px-10 py-4 rounded-lg font-bold text-lg hover:bg-[#b8943a] transition-all shadow-lg shadow-[#c9a84c]/20"
+              className="bg-[#c9a84c] text-[#1a4731] px-10 py-4 rounded-lg font-bold text-lg hover:bg-[#b8943a] transition-all shadow-lg shadow-[#c9a84c]/20 hover:-translate-y-0.5"
             >
               View Current Standings
             </Link>
             <Link
               href="/blog"
-              className="border-2 border-[#f5f0e8]/30 text-[#f5f0e8] px-10 py-4 rounded-lg font-bold text-lg hover:bg-[#f5f0e8]/10 transition-all"
+              className="border-2 border-[#f5f0e8]/20 text-[#f5f0e8] px-10 py-4 rounded-lg font-bold text-lg hover:bg-[#f5f0e8]/10 hover:border-[#f5f0e8]/40 transition-all hover:-translate-y-0.5"
             >
               Read Tournament Blog
             </Link>
