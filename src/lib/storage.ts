@@ -1,28 +1,14 @@
-import fs from 'fs';
-import path from 'path';
+import { Redis } from '@upstash/redis';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+export async function readData<T>(key: string): Promise<T | null> {
+  return await redis.get<T>(key);
 }
 
-export function readData<T>(key: string): T | null {
-  ensureDataDir();
-  const filePath = path.join(DATA_DIR, `${key}.json`);
-  if (!fs.existsSync(filePath)) return null;
-  try {
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
-}
-
-export function writeData<T>(key: string, data: T): void {
-  ensureDataDir();
-  const filePath = path.join(DATA_DIR, `${key}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(data), 'utf-8');
+export async function writeData<T>(key: string, data: T): Promise<void> {
+  await redis.set(key, data);
 }
